@@ -24,6 +24,7 @@ public class User {
     private Long id;
     private String username;
     private String password;
+    private int enabled = 1;
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Authority> authorities;
