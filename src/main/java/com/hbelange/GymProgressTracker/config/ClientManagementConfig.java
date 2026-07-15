@@ -21,10 +21,10 @@ public class ClientManagementConfig {
             RegisteredClient
                 .withId(UUID.randomUUID().toString())
                 .clientId("client")
-                .clientSecret("secret")
+                .clientSecret("{noop}secret")
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri("https://www.manning.com/authorized")
+                .redirectUri("https://localhost:8080/login/oauth2/code/my_authorization_server")
                 .scope(OidcScopes.OPENID)
                 .build();
         ;
