@@ -28,5 +28,5 @@ public class UserManagementConfig {
     PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
     }
-
 }
+
