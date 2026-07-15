@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Login - Gym Progress Tracker</title>
+    <style>
+        body { font-family: sans-serif; max-width: 400px; margin: 60px auto; padding: 0 20px; }
+        h1 { font-size: 1.8rem; margin-bottom: 24px; }
+        label { display: block; margin-top: 12px; font-size: 0.9rem; }
+        input { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; }
+        button { margin-top: 20px; padding: 8px 16px; }
+        .message { padding: 10px; border-radius: 4px; margin-bottom: 16px; }
+        .message-error { background: #f8d7da; color: #721c24; }
+        .message-success { background: #d4edda; color: #155724; }
+    </style>
+</head>
+<body>
+    <h1>Login</h1>
+
+    <p class="message message-error" th:if="${param.error}">Invalid username or password.</p>
+    <p class="message message-success" th:if="${param.registered}">Registration successful. Please log in.</p>
+
+    <form th:action="@{/login}" method="post">
+        <label for="username">Username</label>
+        <input type="text" id="username" name="username" required />
+
+        <label for="password">Password</label>
+        <input type="password" id="password" name="password" required />
+
+        <button type="submit">Login</button>
+    </form>
+
+    <p>Don't have an account? <a th:href="@{/register}">Register</a></p>
+</body>
+</html>

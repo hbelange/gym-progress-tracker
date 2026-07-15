@@ -21,6 +21,11 @@ public class HealthController {
         return "home";
     }
 
+    @GetMapping("/login")
+    public String login() {
+        return "login";
+    }
+
     @GetMapping("/api/health")
     @ResponseBody
     public String getHealth() {
