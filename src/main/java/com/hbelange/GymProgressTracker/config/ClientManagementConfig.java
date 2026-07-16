@@ -24,7 +24,7 @@ public class ClientManagementConfig {
                 .clientSecret("{noop}secret")
                 .clientAuthenticationMethod(ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .redirectUri("https://localhost:8080/login/oauth2/code/my_authorization_server")
+                .redirectUri("https://localhost:8080/authorized")
                 .scope(OidcScopes.OPENID)
                 .build();
         ;
