@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <meta name="measurement-date" th:content="${date}" />
+    <title>Measurements - Gym Progress Tracker</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 60px auto; padding: 0 20px; }
+        h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        a.back { display: inline-block; margin-bottom: 16px; }
+        .status-card { border: 1px solid #ddd; border-radius: 8px; padding: 16px 20px; margin-top: 16px; }
+        .status-card h2 { margin: 0 0 12px; font-size: 1rem; text-transform: uppercase; color: #666; }
+        .row { display: flex; align-items: center; gap: 8px; }
+        .row span.value { flex: 1; font-size: 1.1rem; }
+        input[type="number"] { flex: 1; padding: 4px; }
+        button.edit { background: none; border: 1px solid #aaa; border-radius: 4px; padding: 2px 8px; cursor: pointer; }
+        button.delete { background: none; border: 1px solid #e57373; border-radius: 4px; color: #c62828; padding: 2px 8px; cursor: pointer; }
+        button.save { background: none; border: 1px solid #388e3c; border-radius: 4px; color: #2e7d32; padding: 2px 8px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <a class="back" href="/measurement">&larr; Calendar</a>
+    <h1 th:text="${date}"></h1>
+
+    <div id="measurement-types"></div>
+
+    <script>
+        const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+        const date = document.querySelector('meta[name="measurement-date"]').content;
+        const types = [
+            { key: 'WEIGHT', label: 'Weight' },
+            { key: 'CALORIES', label: 'Calories' },
+            { key: 'STEPS', label: 'Steps' }
+        ];
+
+        function cardHtml(t, existing) {
+            if (existing) {
+                return `
+                    <div class="status-card" id="type-${t.key}">
+                        <h2>${t.label}</h2>
+                        <div class="row">
+                            <span class="value">${existing.value}</span>
+                            <button class="edit" onclick="startEdit('${t.key}', ${existing.id}, ${existing.value})">Edit</button>
+                            <button class="delete" onclick="deleteMeasurement('${t.key}', ${existing.id})">Delete</button>
+                        </div>
+                    </div>`;
+            }
+            return `
+                <div class="status-card" id="type-${t.key}">
+                    <h2>${t.label}</h2>
+                    <form class="row" onsubmit="createMeasurement(event, '${t.key}')">
+                        <input type="number" step="any" min="0" placeholder="${t.label} value" required />
+                        <button type="submit">Add</button>
+                    </form>
+                </div>`;
+        }
+
+        async function fetchForDay() {
+            const res = await fetch('/api/measurement');
+            const all = await res.json();
+            return all.filter(m => m.date === date);
+        }
+
+        async function loadDay() {
+            const forDay = await fetchForDay();
+            const container = document.getElementById('measurement-types');
+            container.innerHTML = types.map(t => cardHtml(t, forDay.find(m => m.measurementType === t.key))).join('');
+        }
+
+        async function refreshCard(typeKey) {
+            const forDay = await fetchForDay();
+            const t = types.find(t => t.key === typeKey);
+            const existing = forDay.find(m => m.measurementType === typeKey);
+            document.getElementById(`type-${typeKey}`).outerHTML = cardHtml(t, existing);
+        }
+
+        function startEdit(typeKey, id, currentValue) {
+            const row = document.querySelector(`#type-${typeKey} .row`);
+            row.innerHTML = `
+                <input type="number" step="any" min="0" value="${currentValue}" id="edit-input-${typeKey}" />
+                <button class="save" onclick="saveEdit('${typeKey}', ${id})">Save</button>
+                <button class="edit" onclick="refreshCard('${typeKey}')">Cancel</button>`;
+        }
+
+        async function saveEdit(typeKey, id) {
+            const value = parseFloat(document.getElementById(`edit-input-${typeKey}`).value);
+            await fetch(`/api/measurement/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                body: JSON.stringify({ date, measurementType: typeKey, value })
+            });
+            refreshCard(typeKey);
+        }
+
+        async function deleteMeasurement(typeKey, id) {
+            await fetch(`/api/measurement/${id}`, {
+                method: 'DELETE',
+                headers: { [csrfHeader]: csrfToken }
+            });
+            refreshCard(typeKey);
+        }
+
+        async function createMeasurement(event, typeKey) {
+            event.preventDefault();
+            const input = event.target.querySelector('input');
+            const value = parseFloat(input.value);
+            await fetch('/api/measurement', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                body: JSON.stringify({ date, measurementType: typeKey, value })
+            });
+            refreshCard(typeKey);
+        }
+
+        loadDay();
+    </script>
+</body>
+</html>

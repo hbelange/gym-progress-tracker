@@ -33,6 +33,11 @@ public class WorkoutTypeController {
         this.workoutTypeService = workoutTypeService;
     }
 
+    @GetMapping("/workoutType")
+    public String workoutTypePage() {
+        return "workoutType";
+    }
+
     @GetMapping("/api/workoutType")
     @ResponseBody
     public ResponseEntity<List<WorkoutTypeResponseDTO>> getAllWorkoutTypes(Authentication authentication) {

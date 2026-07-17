@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <title>Workout Types - Gym Progress Tracker</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 60px auto; padding: 0 20px; }
+        h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        a.back { display: inline-block; margin-bottom: 16px; }
+        .status-card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-top: 24px; }
+        .status-card h2 { margin: 0 0 16px; font-size: 1rem; text-transform: uppercase; color: #666; }
+        #workoutType-list { list-style: none; padding: 0; margin-top: 12px; }
+        #workoutType-list li { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #eee; }
+        #workoutType-list li span { flex: 1; }
+        button.edit { background: none; border: 1px solid #aaa; border-radius: 4px; padding: 2px 8px; cursor: pointer; }
+        button.delete { background: none; border: 1px solid #e57373; border-radius: 4px; color: #c62828; padding: 2px 8px; cursor: pointer; }
+        button.save { background: none; border: 1px solid #388e3c; border-radius: 4px; color: #2e7d32; padding: 2px 8px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <a class="back" href="/">&larr; Home</a>
+    <h1>Workout Types</h1>
+
+    <div class="status-card">
+        <form id="workoutType-form">
+            <input id="workoutType-name" type="text" placeholder="Workout type name" maxlength="100" required />
+            <button type="submit">Add</button>
+        </form>
+        <ul id="workoutType-list"></ul>
+    </div>
+
+    <script>
+        const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+        async function loadWorkoutTypes() {
+            const res = await fetch('/api/workoutType');
+            const workoutTypes = await res.json();
+            const list = document.getElementById('workoutType-list');
+            list.innerHTML = workoutTypes.map(w => `
+                <li id="workoutType-${w.id}">
+                    <span>${w.name}</span>
+                    <button class="edit" onclick="startEdit(${w.id}, '${w.name}')">Edit</button>
+                    <button class="delete" onclick="deleteWorkoutType(${w.id})">Delete</button>
+                </li>`).join('');
+        }
+
+        function startEdit(id, currentName) {
+            const li = document.getElementById(`workoutType-${id}`);
+            li.innerHTML = `
+                <input type="text" value="${currentName}" maxlength="100" id="edit-input-${id}" />
+                <button class="save" onclick="saveEdit(${id})">Save</button>
+                <button class="edit" onclick="loadWorkoutTypes()">Cancel</button>`;
+        }
+
+        async function saveEdit(id) {
+            const name = document.getElementById(`edit-input-${id}`).value.trim();
+            await fetch(`/api/workoutType/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                body: JSON.stringify({ name })
+            });
+            loadWorkoutTypes();
+        }
+
+        async function deleteWorkoutType(id) {
+            await fetch(`/api/workoutType/${id}`, {
+                method: 'DELETE',
+                headers: { [csrfHeader]: csrfToken }
+            });
+            loadWorkoutTypes();
+        }
+
+        document.getElementById('workoutType-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('workoutType-name').value.trim();
+            await fetch('/api/workoutType', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                body: JSON.stringify({ name })
+            });
+            document.getElementById('workoutType-name').value = '';
+            loadWorkoutTypes();
+        });
+
+        loadWorkoutTypes();
+    </script>
+</body>
+</html>
