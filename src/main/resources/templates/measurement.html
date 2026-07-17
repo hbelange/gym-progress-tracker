@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Measurements - Gym Progress Tracker</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 60px auto; padding: 0 20px; }
+        h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        a.back { display: inline-block; margin-bottom: 16px; }
+        .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; }
+        .nav a { text-decoration: none; font-size: 1.2rem; padding: 4px 12px; border: 1px solid #aaa; border-radius: 4px; color: inherit; }
+        table.calendar { width: 100%; border-collapse: collapse; margin-top: 16px; table-layout: fixed; }
+        table.calendar th { padding: 6px; font-size: 0.8rem; color: #666; }
+        table.calendar td { height: 56px; border: 1px solid #eee; text-align: center; vertical-align: top; padding: 0; }
+        table.calendar td.today { box-shadow: inset 0 0 0 2px #fbc02d; }
+        table.calendar td.day-complete { background: #c8e6c9; }
+        table.calendar td.day-partial { background: #fff9c4; }
+        table.calendar td.day-empty { background: #ffcdd2; }
+        table.calendar td a { display: flex; justify-content: center; box-sizing: border-box; width: 100%; height: 100%; padding: 4px; text-decoration: none; color: inherit; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <a class="back" href="/">&larr; Home</a>
+    <h1>Measurements</h1>
+
+    <div class="nav">
+        <a th:href="@{/measurement(year=${prevYear}, month=${prevMonth})}">&larr;</a>
+        <strong th:text="${monthLabel}"></strong>
+        <a th:href="@{/measurement(year=${nextYear}, month=${nextMonth})}">&rarr;</a>
+    </div>
+
+    <table class="calendar">
+        <thead>
+            <tr>
+                <th>Mon</th><th>Tue</th><th>Wed</th><th>Thu</th><th>Fri</th><th>Sat</th><th>Sun</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr th:each="week : ${weeks}">
+                <td th:each="day : ${week}" th:attr="data-date=${day}" th:classappend="${day != null and day.equals(today)} ? 'today' : ''">
+                    <a th:if="${day != null}" th:href="@{/measurement/{date}(date=${day})}" th:text="${day.dayOfMonth}"></a>
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script>
+        const MEASUREMENT_TYPE_COUNT = 3;
+
+        async function colorDays() {
+            const res = await fetch('/api/measurement');
+            const all = await res.json();
+
+            const typesByDate = {};
+            all.forEach(m => {
+                if (!typesByDate[m.date]) typesByDate[m.date] = new Set();
+                typesByDate[m.date].add(m.measurementType);
+            });
+
+            document.querySelectorAll('td[data-date]').forEach(td => {
+                const recorded = typesByDate[td.dataset.date] ? typesByDate[td.dataset.date].size : 0;
+                if (recorded === 0) {
+                    td.classList.add('day-empty');
+                } else if (recorded >= MEASUREMENT_TYPE_COUNT) {
+                    td.classList.add('day-complete');
+                } else {
+                    td.classList.add('day-partial');
+                }
+            });
+        }
+
+        colorDays();
+    </script>
+</body>
+</html>
