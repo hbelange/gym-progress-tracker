@@ -1,0 +1,2 @@
+ALTER TABLE workout_set ALTER COLUMN weight SET NOT NULL;
+ALTER TABLE workout_set ADD COLUMN set_number INT NOT NULL DEFAULT 1;
