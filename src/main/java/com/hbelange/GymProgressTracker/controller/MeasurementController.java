@@ -1,11 +1,7 @@
 package com.hbelange.GymProgressTracker.controller;
 
 import java.time.LocalDate;
-import java.time.YearMonth;
-import java.time.format.TextStyle;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Locale;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
@@ -23,6 +19,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import com.hbelange.GymProgressTracker.dto.MeasurementRequestDTO;
 import com.hbelange.GymProgressTracker.dto.MeasurementResponseDTO;
 import com.hbelange.GymProgressTracker.service.MeasurementService;
+import com.hbelange.GymProgressTracker.web.MonthCalendarView;
 
 import org.springframework.http.HttpStatus;
 
@@ -43,36 +40,14 @@ public class MeasurementController {
     public String measurementPage(@RequestParam(required = false) Integer year,
                                    @RequestParam(required = false) Integer month,
                                    Model model) {
-        YearMonth yearMonth = (year != null && month != null) ? YearMonth.of(year, month) : YearMonth.now();
-
-        List<LocalDate> days = new ArrayList<>();
-        int leadingBlanks = yearMonth.atDay(1).getDayOfWeek().getValue() - 1;
-        for (int i = 0; i < leadingBlanks; i++) {
-            days.add(null);
-        }
-        for (int day = 1; day <= yearMonth.lengthOfMonth(); day++) {
-            days.add(yearMonth.atDay(day));
-        }
-        while (days.size() % 7 != 0) {
-            days.add(null);
-        }
-
-        List<List<LocalDate>> weeks = new ArrayList<>();
-        for (int i = 0; i < days.size(); i += 7) {
-            weeks.add(days.subList(i, i + 7));
-        }
-
-        YearMonth previousMonth = yearMonth.minusMonths(1);
-        YearMonth nextMonth = yearMonth.plusMonths(1);
-
-        model.addAttribute("weeks", weeks);
-        model.addAttribute("monthLabel", yearMonth.getMonth().getDisplayName(TextStyle.FULL, Locale.ENGLISH) + " " + yearMonth.getYear());
-        model.addAttribute("prevYear", previousMonth.getYear());
-        model.addAttribute("prevMonth", previousMonth.getMonthValue());
-        model.addAttribute("nextYear", nextMonth.getYear());
-        model.addAttribute("nextMonth", nextMonth.getMonthValue());
-        model.addAttribute("today", LocalDate.now());
-
+        MonthCalendarView calendar = MonthCalendarView.of(year, month);
+        model.addAttribute("weeks", calendar.weeks());
+        model.addAttribute("monthLabel", calendar.monthLabel());
+        model.addAttribute("prevYear", calendar.prevYear());
+        model.addAttribute("prevMonth", calendar.prevMonth());
+        model.addAttribute("nextYear", calendar.nextYear());
+        model.addAttribute("nextMonth", calendar.nextMonth());
+        model.addAttribute("today", calendar.today());
         return "measurement";
     }
 

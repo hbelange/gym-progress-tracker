@@ -9,5 +9,7 @@ import com.hbelange.GymProgressTracker.entity.Workout;
 public interface WorkoutRepository extends JpaRepository<Workout, Long> {
 
     List<Workout> findAllByUser_Username(String username);
-    
+
+    boolean existsByIdAndUser_Username(Long id, String username);
+
 }
