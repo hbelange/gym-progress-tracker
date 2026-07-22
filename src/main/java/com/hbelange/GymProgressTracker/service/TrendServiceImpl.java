@@ -9,43 +9,63 @@ import java.util.Map;
 
 import org.springframework.stereotype.Service;
 
+import com.hbelange.GymProgressTracker.dto.ExerciseTrendPointDTO;
+import com.hbelange.GymProgressTracker.dto.ExerciseTrendResponseDTO;
 import com.hbelange.GymProgressTracker.dto.MeasurementTrendPointDTO;
 import com.hbelange.GymProgressTracker.dto.MeasurementTrendResponseDTO;
+import com.hbelange.GymProgressTracker.dto.TrendPoint;
 import com.hbelange.GymProgressTracker.dto.TrendRange;
 import com.hbelange.GymProgressTracker.dto.WeeklyAverageDTO;
+import com.hbelange.GymProgressTracker.entity.Measurement;
 import com.hbelange.GymProgressTracker.entity.MeasurementType;
+import com.hbelange.GymProgressTracker.entity.Set;
 import com.hbelange.GymProgressTracker.repository.MeasurementRepository;
+import com.hbelange.GymProgressTracker.repository.SetRepository;
 
 @Service
 public class TrendServiceImpl implements TrendService {
 
     private final MeasurementRepository measurementRepository;
+    private final SetRepository setRepository;
 
-    public TrendServiceImpl(MeasurementRepository measurementRepository) {
+    public TrendServiceImpl(MeasurementRepository measurementRepository, SetRepository setRepository) {
         this.measurementRepository = measurementRepository;
+        this.setRepository = setRepository;
     }
 
     @Override
     public MeasurementTrendResponseDTO getMeasurementTrend(String username, MeasurementType type, TrendRange range) {
-        
+
         LocalDate today = LocalDate.now();
 
-        List<MeasurementTrendPointDTO> series = measurementRepository.findAllByUser_UsernameAndTypeAndDateBetween(
-            username, 
-            type, 
-            today.minusDays(range.getDays()), 
+        List<MeasurementTrendPointDTO> series = toPoints(measurementRepository.findAllByUser_UsernameAndTypeAndDateBetween(
+            username,
+            type,
+            today.minusDays(range.getDays() - 1),
             today
-        ).stream()
-         .map(measurement -> new MeasurementTrendPointDTO(measurement.getDate(), measurement.getValue()))
-         .toList();
+        ));
 
-        return new MeasurementTrendResponseDTO(series, computeWeeklyAverages(series, today));
+        // Weekly averages always cover the last 4 rolling weeks, independent of the selected range.
+        List<MeasurementTrendPointDTO> lastFourWeeks = toPoints(measurementRepository.findAllByUser_UsernameAndTypeAndDateBetween(
+            username,
+            type,
+            today.minusDays(27),
+            today
+        ));
+
+        return new MeasurementTrendResponseDTO(series, computeWeeklyAverages(lastFourWeeks, today));
     }
 
-    private List<WeeklyAverageDTO> computeWeeklyAverages(List<MeasurementTrendPointDTO> measurements, LocalDate today) {
+    private List<MeasurementTrendPointDTO> toPoints(List<Measurement> measurements) {
+        return measurements.stream()
+            .map(measurement -> new MeasurementTrendPointDTO(measurement.getDate(), measurement.getValue()))
+            .toList();
+    }
+
+    private <T extends TrendPoint> List<WeeklyAverageDTO> computeWeeklyAverages(List<T> measurements, LocalDate today) {
         
         Map<Integer, List<Double>> buckets = new HashMap<>();
-        for (MeasurementTrendPointDTO measurement : measurements) {
+        for (T measurement : measurements) {
             long daysAgo = ChronoUnit.DAYS.between(measurement.date(), today);
             int weekNumber = (int) (daysAgo / 7);
             buckets.computeIfAbsent(weekNumber, k -> new ArrayList<>()).add(measurement.value());
@@ -61,5 +81,30 @@ public class TrendServiceImpl implements TrendService {
             })
             .toList();
 
+    }
+
+    @Override
+    public ExerciseTrendResponseDTO getExerciseTrend(String string, Long id, TrendRange week) {
+        
+        LocalDate today = LocalDate.now();
+
+        // Get estimated one rep max for every day - if more than one set for date, take the max one rep max for that day.
+        Map<LocalDate, Double> dailyOneRepMax = new HashMap<>();
+        for (Set set : setRepository.findAllByUser_UsernameAndExercise_Id(string, id)) {
+            double oneRepMax = set.getWeight() * (1 + (set.getReps() / 30.0));
+            dailyOneRepMax.merge(set.getWorkout().getDate(), oneRepMax, Double::max);
+        }
+
+        List<ExerciseTrendPointDTO> series = dailyOneRepMax.entrySet().stream()
+            .filter(entry -> !entry.getKey().isBefore(today.minusDays(week.getDays() - 1)))
+            .map(entry -> new ExerciseTrendPointDTO(entry.getKey(), entry.getValue()))
+            .toList();
+
+        List<ExerciseTrendPointDTO> lastFourWeeks = dailyOneRepMax.entrySet().stream()
+            .filter(entry -> !entry.getKey().isBefore(today.minusDays(27)))
+            .map(entry -> new ExerciseTrendPointDTO(entry.getKey(), entry.getValue()))
+            .toList();
+
+        return new ExerciseTrendResponseDTO(series, computeWeeklyAverages(lastFourWeeks, today));
     }
 }

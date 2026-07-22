@@ -15,4 +15,6 @@ public interface SetRepository extends JpaRepository<Set, Long> {
     List<Set> findAllByWorkout_IdAndExercise_IdOrderBySetNumberAsc(Long workoutId, Long exerciseId);
 
     int countByWorkout_IdAndExercise_Id(Long workoutId, Long exerciseId);
+
+    List<Set> findAllByUser_UsernameAndExercise_Id(String username, Long exerciseId);
 }
