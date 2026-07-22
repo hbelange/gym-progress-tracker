@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <meta name="workout-date" th:content="${date}" />
+    <title>Workout - Gym Progress Tracker</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 60px auto; padding: 0 20px; }
+        h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        a.back { display: inline-block; margin-bottom: 16px; }
+        .status-card { border: 1px solid #ddd; border-radius: 8px; padding: 16px 20px; margin-top: 16px; }
+        .status-card h2 { margin: 0 0 12px; font-size: 1rem; text-transform: uppercase; color: #666; }
+        .row { display: flex; align-items: center; gap: 8px; }
+        .row span.value { flex: 1; font-size: 1.1rem; }
+        select, input[type="number"] { flex: 1; padding: 4px; }
+        button.edit { background: none; border: 1px solid #aaa; border-radius: 4px; padding: 2px 8px; cursor: pointer; }
+        button.delete { background: none; border: 1px solid #e57373; border-radius: 4px; color: #c62828; padding: 2px 8px; cursor: pointer; }
+        button.save { background: none; border: 1px solid #388e3c; border-radius: 4px; color: #2e7d32; padding: 2px 8px; cursor: pointer; }
+        table.sets { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
+        table.sets th, table.sets td { padding: 4px; text-align: left; font-size: 0.9rem; }
+        .add-exercise { display: flex; gap: 8px; margin-top: 16px; }
+    </style>
+</head>
+<body>
+    <a class="back" href="/workout">&larr; Calendar</a>
+    <h1 th:text="${date}"></h1>
+
+    <div id="workout-container"></div>
+
+    <script>
+        const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+        const date = document.querySelector('meta[name="workout-date"]').content;
+
+        let currentWorkout = null;
+        let currentSets = [];
+        let exercises = [];
+        let workoutTypes = [];
+
+        async function fetchWorkoutForDay() {
+            const res = await fetch('/api/workouts');
+            const all = await res.json();
+            return all.find(w => w.date === date) || null;
+        }
+
+        async function fetchSets(workoutId) {
+            const res = await fetch(`/api/workouts/${workoutId}/sets`);
+            return res.json();
+        }
+
+        function groupSetsByExercise() {
+            const groups = new Map();
+            currentSets.forEach(s => {
+                if (!groups.has(s.exerciseId)) groups.set(s.exerciseId, { name: s.exerciseName, sets: [] });
+                groups.get(s.exerciseId).sets.push(s);
+            });
+            return groups;
+        }
+
+        function startWorkoutCardHtml() {
+            const options = workoutTypes.map(t => `<option value="${t.id}">${t.name}</option>`).join('');
+            return `
+                <div class="status-card">
+                    <h2>Start Workout</h2>
+                    <form class="row" id="start-workout-form">
+                        <select id="workout-type-select" required>${options}</select>
+                        <button type="submit">Start Workout</button>
+                    </form>
+                </div>`;
+        }
+
+        function headerCardHtml() {
+            return `
+                <div class="status-card" id="workout-header">
+                    <h2>Workout</h2>
+                    <div class="row">
+                        <span class="value">${currentWorkout.workoutTypeName}</span>
+                        <button class="edit" onclick="startEditWorkoutType()">Edit</button>
+                        <button class="delete" onclick="deleteWorkout()">Delete</button>
+                    </div>
+                </div>`;
+        }
+
+        function setsTableHtml(exerciseId, sets) {
+            const rows = [...sets].sort((a, b) => a.setNumber - b.setNumber).map(s => `
+                <tr id="set-${s.id}">
+                    <td>${s.setNumber}</td>
+                    <td>${s.reps}</td>
+                    <td>${s.repsInReserve ?? ''}</td>
+                    <td>${s.weight}</td>
+                    <td>
+                        <button class="edit" onclick="startEditSet(${s.id}, ${exerciseId})">Edit</button>
+                        <button class="delete" onclick="deleteSet(${s.id})">Delete</button>
+                    </td>
+                </tr>`).join('');
+            return `
+                <table class="sets" id="sets-table-${exerciseId}">
+                    <thead><tr><th>#</th><th>Reps</th><th>RIR</th><th>Weight</th><th></th></tr></thead>
+                    <tbody>${rows}</tbody>
+                </table>`;
+        }
+
+        function exerciseCardHtml(exerciseId, exerciseName, sets) {
+            return `
+                <div class="status-card" id="exercise-${exerciseId}">
+                    <h2>${exerciseName}</h2>
+                    ${setsTableHtml(exerciseId, sets)}
+                    <form class="row" onsubmit="addSet(event, ${exerciseId})">
+                        <input type="number" min="0" step="1" placeholder="Reps" required />
+                        <input type="number" min="0" step="1" placeholder="RIR" />
+                        <input type="number" min="0" step="any" placeholder="Weight" required />
+                        <button type="submit">Add Set</button>
+                    </form>
+                </div>`;
+        }
+
+        function addExerciseFormHtml() {
+            const options = exercises.map(e => `<option value="${e.id}">${e.name}</option>`).join('');
+            return `
+                <div class="add-exercise">
+                    <select id="add-exercise-select">${options}</select>
+                    <button onclick="addExerciseCard()">Add Exercise</button>
+                </div>`;
+        }
+
+        function renderWorkout() {
+            const container = document.getElementById('workout-container');
+            if (!currentWorkout) {
+                container.innerHTML = startWorkoutCardHtml();
+                document.getElementById('start-workout-form').addEventListener('submit', createWorkout);
+                return;
+            }
+
+            const groups = groupSetsByExercise();
+            const cardsHtml = Array.from(groups.entries())
+                .map(([exerciseId, group]) => exerciseCardHtml(exerciseId, group.name, group.sets))
+                .join('');
+
+            container.innerHTML = headerCardHtml()
+                + `<div id="exercise-list">${cardsHtml}</div>`
+                + addExerciseFormHtml();
+        }
+
+        async function loadWorkout() {
+            const [types, exerciseList, workout] = await Promise.all([
+                fetch('/api/workoutType').then(r => r.json()),
+                fetch('/api/exercise').then(r => r.json()),
+                fetchWorkoutForDay()
+            ]);
+            workoutTypes = types;
+            exercises = exerciseList;
+            currentWorkout = workout;
+            currentSets = currentWorkout ? await fetchSets(currentWorkout.id) : [];
+            renderWorkout();
+        }
+
+        async function refreshSets() {
+            currentSets = currentWorkout ? await fetchSets(currentWorkout.id) : [];
+            renderWorkout();
+        }
+
+        async function createWorkout(event) {
+            event.preventDefault();
+            const workoutTypeId = parseInt(document.getElementById('workout-type-select').value);
+            const res = await fetch('/api/workouts', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                body: JSON.stringify({ date, workoutTypeId })
+            });
+            currentWorkout = await res.json();
+            currentSets = [];
+            renderWorkout();
+        }
+
+        function startEditWorkoutType() {
+            const options = workoutTypes.map(t =>
+                `<option value="${t.id}" ${t.name === currentWorkout.workoutTypeName ? 'selected' : ''}>${t.name}</option>`
+            ).join('');
+            const row = document.querySelector('#workout-header .row');
+            row.innerHTML = `
+                <select id="edit-workout-type-select">${options}</select>
+                <button class="save" onclick="saveWorkoutType()">Save</button>
+                <button class="edit" onclick="renderWorkout()">Cancel</button>`;
+        }
+
+        async function saveWorkoutType() {
+            const workoutTypeId = parseInt(document.getElementById('edit-workout-type-select').value);
+            const res = await fetch(`/api/workouts/${currentWorkout.id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                body: JSON.stringify({ date, workoutTypeId })
+            });
+            currentWorkout = await res.json();
+            renderWorkout();
+        }
+
+        async function deleteWorkout() {
+            await fetch(`/api/workouts/${currentWorkout.id}`, {
+                method: 'DELETE',
+                headers: { [csrfHeader]: csrfToken }
+            });
+            currentWorkout = null;
+            currentSets = [];
+            renderWorkout();
+        }
+
+        async function addSet(event, exerciseId) {
+            event.preventDefault();
+            const inputs = event.target.querySelectorAll('input');
+            const reps = parseInt(inputs[0].value);
+            const repsInReserve = inputs[1].value ? parseInt(inputs[1].value) : null;
+            const weight = parseFloat(inputs[2].value);
+            await fetch('/api/sets', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                body: JSON.stringify({ workoutId: currentWorkout.id, exerciseId, reps, repsInReserve, weight })
+            });
+            refreshSets();
+        }
+
+        function startEditSet(setId, exerciseId) {
+            const set = currentSets.find(s => s.id === setId);
+            const row = document.getElementById(`set-${setId}`);
+            row.innerHTML = `
+                <td colspan="2"><input type="number" min="0" step="1" id="edit-reps-${setId}" value="${set.reps}" /></td>
+                <td><input type="number" min="0" step="1" id="edit-rir-${setId}" value="${set.repsInReserve ?? ''}" /></td>
+                <td><input type="number" min="0" step="any" id="edit-weight-${setId}" value="${set.weight}" /></td>
+                <td>
+                    <button class="save" onclick="saveSet(${setId}, ${exerciseId})">Save</button>
+                    <button class="edit" onclick="renderWorkout()">Cancel</button>
+                </td>`;
+        }
+
+        async function saveSet(setId, exerciseId) {
+            const reps = parseInt(document.getElementById(`edit-reps-${setId}`).value);
+            const rirInput = document.getElementById(`edit-rir-${setId}`).value;
+            const repsInReserve = rirInput ? parseInt(rirInput) : null;
+            const weight = parseFloat(document.getElementById(`edit-weight-${setId}`).value);
+            await fetch(`/api/sets/${setId}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                body: JSON.stringify({ workoutId: currentWorkout.id, exerciseId, reps, repsInReserve, weight })
+            });
+            refreshSets();
+        }
+
+        async function deleteSet(setId) {
+            await fetch(`/api/sets/${setId}`, {
+                method: 'DELETE',
+                headers: { [csrfHeader]: csrfToken }
+            });
+            refreshSets();
+        }
+
+        function addExerciseCard() {
+            const exerciseId = parseInt(document.getElementById('add-exercise-select').value);
+            const existing = document.getElementById(`exercise-${exerciseId}`);
+            if (existing) {
+                existing.scrollIntoView({ behavior: 'smooth' });
+                return;
+            }
+            const exercise = exercises.find(e => e.id === exerciseId);
+            document.getElementById('exercise-list').insertAdjacentHTML('beforeend', exerciseCardHtml(exerciseId, exercise.name, []));
+        }
+
+        loadWorkout();
+    </script>
+</body>
+</html>

@@ -17,13 +17,13 @@ public interface WorkoutService {
 
     WorkoutResponseDTO updateWorkout(Long id, WorkoutRequestDTO workoutRequestDTO);
 
-    WorkoutResponseDTO deleteWorkout(Long id);
+    void deleteWorkout(Long id);
 
     SetResponseDTO addSetToWorkout(SetRequestDTO setRequestDTO);
 
     SetResponseDTO updateSet(Long setId, SetRequestDTO setRequestDTO);
 
-    SetResponseDTO deleteSet(Long setId);
+    void deleteSet(Long setId);
 
     List<SetResponseDTO> getSetsByWorkoutId(Long workoutId);
 
