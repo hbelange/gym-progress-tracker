@@ -3,12 +3,16 @@ package com.hbelange.GymProgressTracker.service;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 
+import com.hbelange.GymProgressTracker.dto.ExerciseActivityDTO;
 import com.hbelange.GymProgressTracker.dto.ExerciseTrendPointDTO;
 import com.hbelange.GymProgressTracker.dto.ExerciseTrendResponseDTO;
 import com.hbelange.GymProgressTracker.dto.MeasurementTrendPointDTO;
@@ -106,5 +110,23 @@ public class TrendServiceImpl implements TrendService {
             .toList();
 
         return new ExerciseTrendResponseDTO(series, computeWeeklyAverages(lastFourWeeks, today));
+    }
+
+    @Override
+    public List<ExerciseActivityDTO> getExercisesByRecentActivity(String username) {
+
+        List<ExerciseActivityDTO> exercises = new ArrayList<>();
+        
+        setRepository.findAllByUser_Username(username).forEach(set -> {
+            exercises.add(new ExerciseActivityDTO(set.getExercise().getId(), set.getExercise().getName(), set.getWorkout().getDate()));
+        });
+
+        return exercises.stream()
+                .collect(Collectors.groupingBy(ExerciseActivityDTO::exerciseId, Collectors.maxBy(Comparator.comparing(ExerciseActivityDTO::lastWorkoutDate))))
+                .values().stream()
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .sorted(Comparator.comparing(ExerciseActivityDTO::lastWorkoutDate).reversed())
+                .toList();    
     }
 }

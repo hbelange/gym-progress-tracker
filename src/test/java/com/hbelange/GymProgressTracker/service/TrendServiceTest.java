@@ -13,6 +13,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.security.test.context.support.WithMockUser;
 
 import com.hbelange.GymProgressTracker.TestcontainersConfiguration;
+import com.hbelange.GymProgressTracker.dto.ExerciseActivityDTO;
 import com.hbelange.GymProgressTracker.dto.ExerciseRequestDTO;
 import com.hbelange.GymProgressTracker.dto.ExerciseResponseDTO;
 import com.hbelange.GymProgressTracker.dto.ExerciseTrendResponseDTO;
@@ -26,6 +27,8 @@ import com.hbelange.GymProgressTracker.dto.WorkoutResponseDTO;
 import com.hbelange.GymProgressTracker.dto.WorkoutTypeRequestDTO;
 import com.hbelange.GymProgressTracker.dto.WorkoutTypeResponseDTO;
 import com.hbelange.GymProgressTracker.entity.MeasurementType;
+
+import lombok.With;
 
 @SpringBootTest
 @Import(TestcontainersConfiguration.class)
@@ -139,5 +142,44 @@ public class TrendServiceTest {
         ExerciseTrendResponseDTO trend = trendService.getExerciseTrend("harrison", squat.id(), TrendRange.WEEK);
 
         assertEquals(2, trend.series().size());
+    }
+
+    @Test
+    @WithMockUser(username = "testuser")
+    void testExercisesOrderedByMostRecentFirst() {
+        WorkoutTypeResponseDTO type = workoutTypeService.createWorkoutType(new WorkoutTypeRequestDTO("Leg Day Recent Activity Test"), "testuser");
+        ExerciseResponseDTO squat = exerciseService.createExercise(new ExerciseRequestDTO("Squat Recent Activity Test"), "testuser");
+        ExerciseResponseDTO legCurl = exerciseService.createExercise(new ExerciseRequestDTO("Leg Curl Recent Activity Test"), "testuser");
+
+        WorkoutResponseDTO oldWorkout = workoutService.createWorkout(new WorkoutRequestDTO(LocalDate.now().minusDays(5), type.id()), "testuser");
+        workoutService.addSetToWorkout(new SetRequestDTO(oldWorkout.id(), squat.id(), 5, 2, 225.0));
+
+        WorkoutResponseDTO recentWorkout = workoutService.createWorkout(new WorkoutRequestDTO(LocalDate.now(), type.id()), "testuser");
+        workoutService.addSetToWorkout(new SetRequestDTO(recentWorkout.id(), legCurl.id(), 12, 2, 60.0));
+
+        List<ExerciseActivityDTO> exercises = trendService.getExercisesByRecentActivity("testuser");
+
+        int legCurlIndex = indexOfExercise(exercises, legCurl.id());
+        int squatIndex = indexOfExercise(exercises, squat.id());
+        assertTrue(legCurlIndex < squatIndex);
+    }
+
+    @Test
+    @WithMockUser(username = "testuser")
+    void testExercisesWithoutSetsAreExcluded() {
+        ExerciseResponseDTO neverLogged = exerciseService.createExercise(new ExerciseRequestDTO("Never Logged Exercise Test"), "testuser");
+
+        List<ExerciseActivityDTO> exercises = trendService.getExercisesByRecentActivity("testuser");
+
+        assertTrue(exercises.stream().noneMatch(e -> e.exerciseId().equals(neverLogged.id())));
+    }
+
+    private int indexOfExercise(List<ExerciseActivityDTO> exercises, Long exerciseId) {
+        for (int i = 0; i < exercises.size(); i++) {
+            if (exercises.get(i).exerciseId().equals(exerciseId)) {
+                return i;
+            }
+        }
+        throw new AssertionError("Exercise not found in list: " + exerciseId);
     }
 }
