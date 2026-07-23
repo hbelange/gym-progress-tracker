@@ -5,6 +5,7 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 
 import com.hbelange.GymProgressTracker.dto.ExerciseActivityDTO;
 import com.hbelange.GymProgressTracker.dto.ExerciseTrendResponseDTO;
@@ -25,6 +26,34 @@ public class TrendController {
 
     public TrendController(TrendService trendService) {
         this.trendService = trendService;
+    }
+
+    @GetMapping("/trend")
+    public String trendRedirect() {
+        return "redirect:/trend/measurements";
+    }
+
+    @GetMapping("/trend/measurements")
+    public String measurementTrendPage(@RequestParam(defaultValue = "WEIGHT") String type,
+                                        @RequestParam(defaultValue = "WEEK") String range,
+                                        Model model) {
+        model.addAttribute("type", MeasurementType.fromString(type));
+        model.addAttribute("range", TrendRange.fromString(range));
+        return "trendMeasurement";
+    }
+
+    @GetMapping("/trend/exercises")
+    public String exerciseListPage() {
+        return "trendExercises";
+    }
+
+    @GetMapping("/trend/exercises/{exerciseId}")
+    public String exerciseTrendPage(@PathVariable Long exerciseId,
+                                     @RequestParam(defaultValue = "WEEK") String range,
+                                     Model model) {
+        model.addAttribute("exerciseId", exerciseId);
+        model.addAttribute("range", TrendRange.fromString(range));
+        return "trendExercise";
     }
 
     @GetMapping("/api/trend/measurements")

@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Exercise Trend - Gym Progress Tracker</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; max-width: 700px; margin: 60px auto; padding: 0 20px; }
+        h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        a.back { display: inline-block; margin-bottom: 16px; }
+        .toggle { display: flex; gap: 8px; margin-top: 16px; }
+        .toggle a { text-decoration: none; padding: 4px 12px; border: 1px solid #aaa; border-radius: 4px; color: inherit; }
+        .toggle a.active { background: #333; color: #fff; }
+        canvas { margin-top: 24px; max-width: 100%; }
+    </style>
+</head>
+<body>
+    <a class="back" href="/trend/exercises">&larr; Lifts</a>
+    <h1>Exercise Trend</h1>
+
+    <div class="toggle">
+        <a th:classappend="${range.name() == 'WEEK'} ? 'active' : ''" th:href="@{/trend/exercises/{id}(id=${exerciseId}, range='WEEK')}">Week</a>
+        <a th:classappend="${range.name() == 'MONTH'} ? 'active' : ''" th:href="@{/trend/exercises/{id}(id=${exerciseId}, range='MONTH')}">Month</a>
+    </div>
+
+    <canvas id="seriesChart"></canvas>
+    <canvas id="weeklyChart"></canvas>
+
+    <script th:inline="javascript">
+        const exerciseId = /*[[${exerciseId}]]*/ 0;
+        const trendRange = /*[[${range}]]*/ 'WEEK';
+
+        async function loadTrend() {
+            const res = await fetch(`/api/trend/exercises/${exerciseId}?range=${trendRange}`);
+            const data = await res.json();
+
+            new Chart(document.getElementById('seriesChart'), {
+                type: 'line',
+                data: {
+                    labels: data.series.map(p => p.date),
+                    datasets: [{ label: 'Estimated 1RM', data: data.series.map(p => p.e1rm) }]
+                }
+            });
+
+            new Chart(document.getElementById('weeklyChart'), {
+                type: 'bar',
+                data: {
+                    labels: data.weeklyAverages.map(w => w.weekStart),
+                    datasets: [{ label: 'Weekly Average', data: data.weeklyAverages.map(w => w.average) }]
+                }
+            });
+        }
+
+        loadTrend();
+    </script>
+</body>
+</html>

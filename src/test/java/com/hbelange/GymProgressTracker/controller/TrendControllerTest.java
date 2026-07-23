@@ -16,6 +16,7 @@ import com.hbelange.GymProgressTracker.service.ExerciseService;
 import com.hbelange.GymProgressTracker.service.TrendService;
 
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @SpringBootTest
@@ -67,6 +68,37 @@ public class TrendControllerTest {
         ExerciseResponseDTO exercise = exerciseService.createExercise(new ExerciseRequestDTO("Overhead Press Controller Test"), "harrison");
 
         mockMvc.perform(get("/api/trend/exercises/" + exercise.id()))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser
+    void trendRedirectsToMeasurements() throws Exception {
+        mockMvc.perform(get("/trend"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/trend/measurements"));
+    }
+
+    @Test
+    @WithMockUser
+    void measurementTrendPageLoads() throws Exception {
+        mockMvc.perform(get("/trend/measurements"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser
+    void exerciseListPageLoads() throws Exception {
+        mockMvc.perform(get("/trend/exercises"))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithMockUser(username = "harrison")
+    void exerciseTrendPageLoads() throws Exception {
+        ExerciseResponseDTO exercise = exerciseService.createExercise(new ExerciseRequestDTO("Deadlift Controller Test"), "harrison");
+
+        mockMvc.perform(get("/trend/exercises/" + exercise.id()))
                 .andExpect(status().isOk());
     }
 }
