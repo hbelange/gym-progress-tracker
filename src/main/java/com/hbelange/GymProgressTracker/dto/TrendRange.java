@@ -13,4 +13,15 @@ public enum TrendRange {
     public int getDays() {
         return days;
     }
+
+    public static TrendRange fromString(String range) {
+        if (range != null) {
+            for (TrendRange t : TrendRange.values()) {
+                if (range.equalsIgnoreCase(t.name())) {
+                    return t;
+                }
+            }
+        }
+        throw new IllegalArgumentException("No trend range found for: " + range);
+    }
 }

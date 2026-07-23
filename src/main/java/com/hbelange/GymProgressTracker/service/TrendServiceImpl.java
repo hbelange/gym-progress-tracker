@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import com.hbelange.GymProgressTracker.dto.ExerciseActivityDTO;
@@ -88,13 +89,13 @@ public class TrendServiceImpl implements TrendService {
     }
 
     @Override
-    public ExerciseTrendResponseDTO getExerciseTrend(String string, Long id, TrendRange week) {
+    public ExerciseTrendResponseDTO getExerciseTrend(String username, Long id, TrendRange week) {
         
         LocalDate today = LocalDate.now();
 
         // Get estimated one rep max for every day - if more than one set for date, take the max one rep max for that day.
         Map<LocalDate, Double> dailyOneRepMax = new HashMap<>();
-        for (Set set : setRepository.findAllByUser_UsernameAndExercise_Id(string, id)) {
+        for (Set set : setRepository.findAllByUser_UsernameAndExercise_Id(username, id)) {
             double oneRepMax = set.getWeight() * (1 + (set.getReps() / 30.0));
             dailyOneRepMax.merge(set.getWorkout().getDate(), oneRepMax, Double::max);
         }
