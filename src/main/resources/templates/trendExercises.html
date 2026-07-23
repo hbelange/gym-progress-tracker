@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Lift Trends - Gym Progress Tracker</title>
+    <style>
+        body { font-family: sans-serif; max-width: 700px; margin: 60px auto; padding: 0 20px; }
+        h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        a.back { display: inline-block; margin-bottom: 16px; }
+        .tabs { display: flex; gap: 8px; margin-top: 16px; }
+        .tabs a { text-decoration: none; padding: 4px 12px; border: 1px solid #aaa; border-radius: 4px; color: inherit; }
+        .tabs a.active { background: #333; color: #fff; }
+        #exercise-list { list-style: none; padding: 0; margin-top: 16px; }
+        #exercise-list li a { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #eee; text-decoration: none; color: inherit; }
+        #exercise-list li span.last-set { color: #666; font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+    <a class="back" href="/">&larr; Home</a>
+    <h1>Trends</h1>
+
+    <div class="tabs">
+        <a th:href="@{/trend/measurements}">Measurements</a>
+        <a class="active" th:href="@{/trend/exercises}">Lifts</a>
+    </div>
+
+    <ul id="exercise-list"></ul>
+
+    <script>
+        async function loadExercises() {
+            const res = await fetch('/api/trend/exercises');
+            const exercises = await res.json();
+            const list = document.getElementById('exercise-list');
+            list.innerHTML = exercises.map(e => `
+                <li>
+                    <a href="/trend/exercises/${e.exerciseId}">
+                        <span>${e.exerciseName}</span>
+                        <span class="last-set">${e.lastWorkoutDate}</span>
+                    </a>
+                </li>`).join('');
+        }
+
+        loadExercises();
+    </script>
+</body>
+</html>
