@@ -43,7 +43,7 @@ public class TrendServiceImpl implements TrendService {
 
         LocalDate today = LocalDate.now();
 
-        List<MeasurementTrendPointDTO> series = toPoints(measurementRepository.findAllByUser_UsernameAndTypeAndDateBetween(
+        List<MeasurementTrendPointDTO> series = toPoints(measurementRepository.findAllByUser_UsernameAndTypeAndDateBetweenOrderByDateAsc(
             username,
             type,
             today.minusDays(range.getDays() - 1),
@@ -51,7 +51,7 @@ public class TrendServiceImpl implements TrendService {
         ));
 
         // Weekly averages always cover the last 4 rolling weeks, independent of the selected range.
-        List<MeasurementTrendPointDTO> lastFourWeeks = toPoints(measurementRepository.findAllByUser_UsernameAndTypeAndDateBetween(
+        List<MeasurementTrendPointDTO> lastFourWeeks = toPoints(measurementRepository.findAllByUser_UsernameAndTypeAndDateBetweenOrderByDateAsc(
             username,
             type,
             today.minusDays(27),
@@ -84,6 +84,7 @@ public class TrendServiceImpl implements TrendService {
                 LocalDate weekStartDate = today.minusWeeks(weekNumber + 1).plusDays(1);
                 return new WeeklyAverageDTO(weekStartDate, average);
             })
+            .sorted(Comparator.comparing(WeeklyAverageDTO::weekStart))
             .toList();
 
     }
@@ -103,6 +104,7 @@ public class TrendServiceImpl implements TrendService {
         List<ExerciseTrendPointDTO> series = dailyOneRepMax.entrySet().stream()
             .filter(entry -> !entry.getKey().isBefore(today.minusDays(week.getDays() - 1)))
             .map(entry -> new ExerciseTrendPointDTO(entry.getKey(), entry.getValue()))
+            .sorted(Comparator.comparing(ExerciseTrendPointDTO::date))
             .toList();
 
         List<ExerciseTrendPointDTO> lastFourWeeks = dailyOneRepMax.entrySet().stream()

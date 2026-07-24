@@ -14,7 +14,7 @@ public interface MeasurementRepository extends JpaRepository<Measurement, Long> 
 
     boolean existsByIdAndUser_Username(Long id, String username);
 
-    List<Measurement> findAllByUser_UsernameAndTypeAndDateBetween(String username,
+    List<Measurement> findAllByUser_UsernameAndTypeAndDateBetweenOrderByDateAsc(String username,
             MeasurementType type, LocalDate startDate, LocalDate endDate);
     
 }

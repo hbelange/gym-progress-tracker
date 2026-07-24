@@ -53,11 +53,15 @@
                 }
             });
 
+            const weeklyMin = Math.min(...data.weeklyAverages.map(w => w.average));
             new Chart(document.getElementById('weeklyChart'), {
                 type: 'bar',
                 data: {
                     labels: data.weeklyAverages.map(w => w.weekStart),
                     datasets: [{ label: 'Weekly Average', data: data.weeklyAverages.map(w => w.average) }]
+                },
+                options: {
+                    scales: { y: { min: weeklyMin * 0.7 } }
                 }
             });
         }
