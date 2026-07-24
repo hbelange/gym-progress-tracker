@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <title>Exercises - Gym Progress Tracker</title>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 60px auto; padding: 0 20px; }
+        h1 { font-size: 1.8rem; margin-bottom: 8px; }
+        a.back { display: inline-block; margin-bottom: 16px; }
+        .status-card { border: 1px solid #ddd; border-radius: 8px; padding: 20px; margin-top: 24px; }
+        #exercise-list { list-style: none; padding: 0; margin-top: 12px; }
+        #exercise-list li { display: flex; align-items: center; gap: 8px; padding: 6px 0; border-bottom: 1px solid #eee; }
+        #exercise-list li span { flex: 1; }
+        button.edit { background: none; border: 1px solid #aaa; border-radius: 4px; padding: 2px 8px; cursor: pointer; }
+        button.delete { background: none; border: 1px solid #e57373; border-radius: 4px; color: #c62828; padding: 2px 8px; cursor: pointer; }
+        button.save { background: none; border: 1px solid #388e3c; border-radius: 4px; color: #2e7d32; padding: 2px 8px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <a class="back" href="/">&larr; Home</a>
+    <h1>Exercises</h1>
+
+    <div class="status-card">
+        <form id="exercise-form">
+            <input id="exercise-name" type="text" placeholder="Exercise name" maxlength="100" required />
+            <button type="submit">Add</button>
+        </form>
+        <ul id="exercise-list"></ul>
+    </div>
+
+    <script>
+        const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+        async function loadExercises() {
+            const res = await fetch('/api/exercise');
+            const exercises = await res.json();
+            const list = document.getElementById('exercise-list');
+            list.innerHTML = exercises.map(e => `
+                <li id="exercise-${e.id}">
+                    <span>${e.name}</span>
+                    <button class="edit" onclick="startEdit(${e.id}, '${e.name}')">Edit</button>
+                    <button class="delete" onclick="deleteExercise(${e.id})">Delete</button>
+                </li>`).join('');
+        }
+
+        function startEdit(id, currentName) {
+            const li = document.getElementById(`exercise-${id}`);
+            li.innerHTML = `
+                <input type="text" value="${currentName}" maxlength="100" id="edit-input-${id}" />
+                <button class="save" onclick="saveEdit(${id})">Save</button>
+                <button class="edit" onclick="loadExercises()">Cancel</button>`;
+        }
+
+        async function saveEdit(id) {
+            const name = document.getElementById(`edit-input-${id}`).value.trim();
+            await fetch(`/api/exercise/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                body: JSON.stringify({ name })
+            });
+            loadExercises();
+        }
+
+        async function deleteExercise(id) {
+            await fetch(`/api/exercise/${id}`, {
+                method: 'DELETE',
+                headers: { [csrfHeader]: csrfToken }
+            });
+            loadExercises();
+        }
+
+        document.getElementById('exercise-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = document.getElementById('exercise-name').value.trim();
+            await fetch('/api/exercise', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                body: JSON.stringify({ name })
+            });
+            document.getElementById('exercise-name').value = '';
+            loadExercises();
+        });
+
+        loadExercises();
+    </script>
+</body>
+</html>
