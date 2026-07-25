@@ -6,26 +6,16 @@
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <meta name="workout-date" th:content="${date}" />
     <title>Workout - Gym Progress Tracker</title>
-    <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 60px auto; padding: 0 20px; }
-        h1 { font-size: 1.8rem; margin-bottom: 8px; }
-        a.back { display: inline-block; margin-bottom: 16px; }
-        .status-card { border: 1px solid #ddd; border-radius: 8px; padding: 16px 20px; margin-top: 16px; }
-        .status-card h2 { margin: 0 0 12px; font-size: 1rem; text-transform: uppercase; color: #666; }
-        .row { display: flex; align-items: center; gap: 8px; }
-        .row span.value { flex: 1; font-size: 1.1rem; }
-        select, input[type="number"] { flex: 1; padding: 4px; }
-        button.edit { background: none; border: 1px solid #aaa; border-radius: 4px; padding: 2px 8px; cursor: pointer; }
-        button.delete { background: none; border: 1px solid #e57373; border-radius: 4px; color: #c62828; padding: 2px 8px; cursor: pointer; }
-        button.save { background: none; border: 1px solid #388e3c; border-radius: 4px; color: #2e7d32; padding: 2px 8px; cursor: pointer; }
-        table.sets { width: 100%; border-collapse: collapse; margin-bottom: 8px; }
-        table.sets th, table.sets td { padding: 4px; text-align: left; font-size: 0.9rem; }
-        .add-exercise { display: flex; gap: 8px; margin-top: 16px; }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <a class="back" href="/workout">&larr; Calendar</a>
-    <h1 th:text="${date}"></h1>
+    <header class="page-header">
+        <a class="back" href="/workout">&larr; Calendar</a>
+        <h1 th:text="${date}"></h1>
+    </header>
 
     <div id="workout-container"></div>
 

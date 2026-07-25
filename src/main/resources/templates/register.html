@@ -3,22 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <title>Register - Gym Progress Tracker</title>
-    <style>
-        body { font-family: sans-serif; max-width: 400px; margin: 60px auto; padding: 0 20px; }
-        h1 { font-size: 1.8rem; margin-bottom: 24px; }
-        label { display: block; margin-top: 12px; font-size: 0.9rem; }
-        input { width: 100%; padding: 8px; margin-top: 4px; box-sizing: border-box; }
-        button { margin-top: 20px; padding: 8px 16px; }
-        .message { padding: 10px; border-radius: 4px; margin-bottom: 16px; }
-        .message-error { background: #f8d7da; color: #721c24; }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
-<body>
+<body class="auth">
     <h1>Register</h1>
 
     <p class="message message-error" th:if="${error}" th:text="${error}"></p>
 
-    <form th:action="@{/register}" method="post">
+    <form class="auth-form" th:action="@{/register}" method="post">
         <label for="username">Username</label>
         <input type="text" id="username" name="username" th:value="${userRequestDTO.username}" required />
 

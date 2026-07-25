@@ -3,25 +3,16 @@
 <head>
     <meta charset="UTF-8">
     <title>Measurements - Gym Progress Tracker</title>
-    <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 60px auto; padding: 0 20px; }
-        h1 { font-size: 1.8rem; margin-bottom: 8px; }
-        a.back { display: inline-block; margin-bottom: 16px; }
-        .nav { display: flex; justify-content: space-between; align-items: center; margin-top: 24px; }
-        .nav a { text-decoration: none; font-size: 1.2rem; padding: 4px 12px; border: 1px solid #aaa; border-radius: 4px; color: inherit; }
-        table.calendar { width: 100%; border-collapse: collapse; margin-top: 16px; table-layout: fixed; }
-        table.calendar th { padding: 6px; font-size: 0.8rem; color: #666; }
-        table.calendar td { height: 56px; border: 1px solid #eee; text-align: center; vertical-align: top; padding: 0; }
-        table.calendar td.today { box-shadow: inset 0 0 0 2px #fbc02d; }
-        table.calendar td.day-complete { background: #c8e6c9; }
-        table.calendar td.day-partial { background: #fff9c4; }
-        table.calendar td.day-empty { background: #ffcdd2; }
-        table.calendar td a { display: flex; justify-content: center; box-sizing: border-box; width: 100%; height: 100%; padding: 4px; text-decoration: none; color: inherit; font-weight: bold; }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <a class="back" href="/">&larr; Home</a>
-    <h1>Measurements</h1>
+    <header class="page-header">
+        <a class="back" href="/">&larr; Home</a>
+        <h1>Measurements</h1>
+    </header>
 
     <div class="nav">
         <a th:href="@{/measurement(year=${prevYear}, month=${prevMonth})}">&larr;</a>
