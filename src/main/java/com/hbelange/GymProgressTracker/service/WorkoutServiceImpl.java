@@ -108,6 +108,7 @@ public class WorkoutServiceImpl implements WorkoutService {
         set.setExercise(exercise);
         set.setReps(setRequestDTO.reps());
         set.setWeight(setRequestDTO.weight());
+        set.setRepsInReserve(setRequestDTO.repsInReserve());
         set.setUser(workout.getUser());
         set.setSetNumber(nextSetNumber);
         set = setRepository.save(set);
