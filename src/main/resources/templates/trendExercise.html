@@ -4,19 +4,16 @@
     <meta charset="UTF-8">
     <title>Exercise Trend - Gym Progress Tracker</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { font-family: sans-serif; max-width: 700px; margin: 60px auto; padding: 0 20px; }
-        h1 { font-size: 1.8rem; margin-bottom: 8px; }
-        a.back { display: inline-block; margin-bottom: 16px; }
-        .toggle { display: flex; gap: 8px; margin-top: 16px; }
-        .toggle a { text-decoration: none; padding: 4px 12px; border: 1px solid #aaa; border-radius: 4px; color: inherit; }
-        .toggle a.active { background: #333; color: #fff; }
-        canvas { margin-top: 24px; max-width: 100%; }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <a class="back" href="/trend/exercises">&larr; Lifts</a>
-    <h1>Exercise Trend</h1>
+    <header class="page-header">
+        <a class="back" href="/trend/exercises">&larr; Lifts</a>
+        <h1>Exercise Trend</h1>
+    </header>
 
     <div class="toggle">
         <a th:classappend="${range.name() == 'WEEK'} ? 'active' : ''" th:href="@{/trend/exercises/{id}(id=${exerciseId}, range='WEEK')}">Week</a>
@@ -38,7 +35,14 @@
                 type: 'line',
                 data: {
                     labels: data.series.map(p => p.date),
-                    datasets: [{ label: 'Estimated 1RM', data: data.series.map(p => p.e1rm) }]
+                    datasets: [{
+                        label: 'Estimated 1RM',
+                        data: data.series.map(p => p.e1rm),
+                        borderColor: '#2C423F',
+                        backgroundColor: 'rgba(44, 66, 63, 0.12)',
+                        pointBackgroundColor: '#2C423F',
+                        tension: 0.25
+                    }]
                 }
             });
 
@@ -47,7 +51,11 @@
                 type: 'bar',
                 data: {
                     labels: data.weeklyAverages.map(w => w.weekStart),
-                    datasets: [{ label: 'Weekly Average', data: data.weeklyAverages.map(w => w.average) }]
+                    datasets: [{
+                        label: 'Weekly Average',
+                        data: data.weeklyAverages.map(w => w.average),
+                        backgroundColor: '#4C5B61'
+                    }]
                 },
                 options: {
                     scales: { y: { min: weeklyMin * 0.7 } }

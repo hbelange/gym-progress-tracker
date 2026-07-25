@@ -3,18 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <title>Gym Progress Tracker</title>
-    <style>
-        body { font-family: sans-serif; max-width: 600px; margin: 60px auto; padding: 0 20px; }
-        h1 { font-size: 1.8rem; margin-bottom: 8px; }
-    </style>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
-    <h1>Gym Progress Tracker</h1>
-    <p>Welcome! Track your workouts and progress.</p>
-    <p><a href="/workout">Workouts</a></p>
-    <p><a href="/workoutType">Manage Workout Types</a></p>
-    <p><a href="/exercise">Exercises</a></p>
-    <p><a href="/measurement">Measurements</a></p>
-    <p><a href="/trend">Trends</a></p>
+    <header class="page-header">
+        <h1>Gym Progress Tracker</h1>
+        <p class="dashboard-lede">Log the work. Watch the trend.</p>
+    </header>
+
+    <nav class="dashboard-grid">
+        <a href="/workout">
+            <span class="label">Workouts</span>
+            <span class="hint">Log sets, reps, weight</span>
+        </a>
+        <a href="/measurement">
+            <span class="label">Measurements</span>
+            <span class="hint">Weight, steps, calories</span>
+        </a>
+        <a href="/trend">
+            <span class="label">Trends</span>
+            <span class="hint">Progress over time</span>
+        </a>
+        <a href="/exercise">
+            <span class="label">Exercises</span>
+            <span class="hint">Manage your library</span>
+        </a>
+        <a href="/workoutType">
+            <span class="label">Workout Types</span>
+            <span class="hint">Push, pull, legs...</span>
+        </a>
+    </nav>
 </body>
 </html>
