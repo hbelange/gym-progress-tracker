@@ -11,7 +11,12 @@
 </head>
 <body>
     <header class="page-header">
-        <h1>Gym Progress Tracker</h1>
+        <div class="header-row">
+            <h1>Gym Progress Tracker</h1>
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="logout">Logout</button>
+            </form>
+        </div>
         <p class="dashboard-lede">Log the work. Watch the trend.</p>
     </header>
 

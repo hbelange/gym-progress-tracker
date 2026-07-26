@@ -20,7 +20,7 @@ public class WebAuthorizationConfig {
                 .loginPage("/login")
                 .permitAll())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/error", "/register", "/css/**").permitAll()
+                .requestMatchers("/error", "/register", "/login", "/css/**").permitAll()
                 .anyRequest().authenticated())
             .build();
     }
