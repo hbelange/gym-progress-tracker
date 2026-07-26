@@ -38,6 +38,10 @@
         const trendType = /*[[${type}]]*/ 'WEIGHT';
         const trendRange = /*[[${range}]]*/ 'WEEK';
 
+        Chart.defaults.color = '#D6D6D6';
+        Chart.defaults.borderColor = 'rgba(214, 214, 214, 0.16)';
+        Chart.defaults.font.family = "'Public Sans', sans-serif";
+
         async function loadTrend() {
             const res = await fetch(`/api/trend/measurements?type=${trendType}&range=${trendRange}`);
             const data = await res.json();
@@ -49,9 +53,9 @@
                     datasets: [{
                         label: trendType,
                         data: data.series.map(p => p.value),
-                        borderColor: '#2C423F',
-                        backgroundColor: 'rgba(44, 66, 63, 0.12)',
-                        pointBackgroundColor: '#2C423F',
+                        borderColor: '#FFD100',
+                        backgroundColor: 'rgba(255, 209, 0, 0.15)',
+                        pointBackgroundColor: '#FFD100',
                         tension: 0.25
                     }]
                 }
@@ -65,7 +69,7 @@
                     datasets: [{
                         label: 'Weekly Average',
                         data: data.weeklyAverages.map(w => w.average),
-                        backgroundColor: '#4C5B61'
+                        backgroundColor: '#FFD100'
                     }]
                 },
                 options: {
