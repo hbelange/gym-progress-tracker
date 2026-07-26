@@ -37,6 +37,12 @@ body {
 
 body.auth { max-width: 420px; }
 
+a {
+    color: var(--gold);
+    text-decoration: none;
+}
+a:hover { text-decoration: underline; }
+
 /* -- header: back link + title -- */
 
 .page-header {
