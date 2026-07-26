@@ -62,19 +62,20 @@
                 }
             });
 
-            const weeklyMin = Math.min(...data.weeklyAverages.map(w => w.average));
+            const weeklyValues = data.weeklyAverages.map(w => w.average);
+            const weeklyMin = weeklyValues.length ? Math.min(...weeklyValues) * 0.7 : undefined;
             new Chart(document.getElementById('weeklyChart'), {
                 type: 'bar',
                 data: {
                     labels: data.weeklyAverages.map(w => w.weekStart),
                     datasets: [{
                         label: 'Weekly Average',
-                        data: data.weeklyAverages.map(w => w.average),
+                        data: weeklyValues,
                         backgroundColor: '#FFD100'
                     }]
                 },
                 options: {
-                    scales: { y: { min: weeklyMin * 0.7 } }
+                    scales: { y: { min: weeklyMin } }
                 }
             });
         }
