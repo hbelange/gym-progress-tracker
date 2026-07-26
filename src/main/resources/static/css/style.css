@@ -87,11 +87,12 @@ h1 {
 .row { display: flex; align-items: center; gap: 8px; }
 .row span.value {
     flex: 1;
+    min-width: 0;
     font-family: var(--font-mono);
     font-size: 1.15rem;
     color: var(--text);
 }
-.row select, .row input[type="number"] { flex: 1; margin-top: 0; }
+.row select, .row input[type="number"] { flex: 1; min-width: 0; margin-top: 0; }
 
 /* -- forms -- */
 
@@ -169,7 +170,8 @@ button.save { border-color: var(--gold); color: var(--gold); }
     border-bottom: 1px solid var(--border);
 }
 #exercise-list li:last-child, #workoutType-list li:last-child { border-bottom: none; }
-#exercise-list li span, #workoutType-list li span { flex: 1; }
+#exercise-list li span, #workoutType-list li span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+#exercise-list li input[type="text"], #workoutType-list li input[type="text"] { flex: 1; min-width: 0; margin-top: 0; }
 
 /* -- sets table -- */
 
@@ -189,8 +191,21 @@ table.sets th {
     font-weight: 700;
 }
 table.sets td { border-bottom: 1px solid var(--border); }
+table.sets input[type="number"] {
+    width: 100%;
+    min-width: 0;
+    margin-top: 0;
+    padding: 6px 4px;
+    appearance: textfield;
+}
+table.sets input[type="number"]::-webkit-outer-spin-button,
+table.sets input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
 
 .add-exercise { display: flex; gap: 8px; margin-top: 16px; }
+.add-exercise select { flex: 1; min-width: 0; }
 
 /* -- month calendar (workout / measurement) -- */
 
@@ -321,4 +336,7 @@ canvas { margin-top: 24px; max-width: 100%; }
 @media (max-width: 480px) {
     .dashboard-grid { grid-template-columns: 1fr; }
     h1 { font-size: 2rem; }
+
+    .add-set-form { flex-wrap: wrap; }
+    .add-set-form button[type="submit"] { flex: 1 0 100%; }
 }

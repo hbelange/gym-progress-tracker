@@ -5,6 +5,7 @@
     <meta name="_csrf" th:content="${_csrf.token}" />
     <meta name="_csrf_header" th:content="${_csrf.headerName}" />
     <meta name="workout-date" th:content="${date}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Workout - Gym Progress Tracker</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -97,7 +98,7 @@
                 <div class="status-card" id="exercise-${exerciseId}">
                     <h2>${exerciseName}</h2>
                     ${setsTableHtml(exerciseId, sets)}
-                    <form class="row" onsubmit="addSet(event, ${exerciseId})">
+                    <form class="row add-set-form" onsubmit="addSet(event, ${exerciseId})">
                         <input type="number" min="0" step="1" placeholder="Reps" required />
                         <input type="number" min="0" step="1" placeholder="RIR" />
                         <input type="number" min="0" step="any" placeholder="Weight" required />
