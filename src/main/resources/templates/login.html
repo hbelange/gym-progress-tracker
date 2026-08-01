@@ -13,7 +13,15 @@
     <h1>Login</h1>
 
     <p class="message message-error" th:if="${param.error}">Invalid username or password.</p>
-    <p class="message message-success" th:if="${param.registered}">Registration successful. Please log in.</p>
+    <p class="message message-success" th:if="${param.verified}">Verification successful. Please log in.</p>
+
+    <div th:if="${param.unverified}">
+        <p class="message message-error">Please verify your email before logging in.</p>
+        <form th:action="@{/resend-verification}" method="post">
+            <input type="hidden" name="username" th:value="${param.username}" />
+            <button type="submit">Resend verification email</button>
+        </form>
+    </div>
 
     <form class="auth-form" th:action="@{/login}" method="post">
         <label for="username">Username</label>

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.hbelange.GymProgressTracker.dto.UserRequestDTO;
@@ -33,9 +34,19 @@ public class UserController {
         return ResponseEntity.ok(registeredUser);
     }
 
+    @GetMapping("/verify")
+    public String verifyEmail(@RequestParam String token) {
+        try {
+            userService.handleVerification(token);
+            return "redirect:/login?verified"; // Redirect to login page with a verified message
+        } catch (RuntimeException e) {
+            return "redirect:/login?error=" + e.getMessage(); // Redirect to login page with an error message
+        }
+    }
+
     @GetMapping("/register")
     public String showRegistrationForm(Model model) {
-        model.addAttribute("userRequestDTO", new UserRequestDTO("", ""));
+        model.addAttribute("userRequestDTO", new UserRequestDTO("", "", ""));
         return "register";
     }
 
@@ -53,7 +64,21 @@ public class UserController {
             return "register";
         }
 
-        return "redirect:/login?registered";
+        return "redirect:/register/pending";
     }
+
+    @GetMapping("/register/pending")
+    public String showPendingVerification(Model model) {
+        model.addAttribute("message", "Please check your email for a verification link.");
+        return "pending";
+    }
+
+    @PostMapping("/resend-verification")
+    public String resendVerification(@RequestParam String username) {
+        userService.resendVerificationEmail(username);
+        return "redirect:/register/pending";
+    }
+
+    
 
 }

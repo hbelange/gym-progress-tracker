@@ -24,8 +24,11 @@ public class User {
     private Long id;
     private String username;
     private String password;
-    private int enabled = 1;
+    private int enabled = 0; // 0 for not verified, 1 for verified
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Authority> authorities;
+
+    // email
+    private String email;
 }
