@@ -69,15 +69,18 @@ Regardless of the above, these values are permanently visible in git history and
 - Gmail: revoke the current app password, generate a new one.
 - JWT secret: `openssl rand -base64 32`.
 - DB password: change on the Postgres instance and in the new env file.
-- Keystore password: `keytool -storepasswd -keystore certificate.p12 -storetype PKCS12` (changes the password without regenerating the keystore).
+- Keystore: generate a brand-new self-signed keystore with `keytool -genkeypair` (a new key pair, not just a new password) — the current `certificate.p12` bytes are permanently in git history since we're not scrubbing it, so re-passwording the existing file (`keytool -storepasswd`) would leave the same private key recoverable from history regardless of the live copy's password.
 
 ### 5. EC2 configuration (manual, on the instance)
 
 Confirmed on the live instance (`ec2-54-91-45-98.compute-1.amazonaws.com`): the service is running as `gym-progress-tracker.service`, jar lives at `/home/ec2-user/app/gym-progress-tracker.jar`, listens on `*:8080`, and there is currently no standalone `certificate.p12` on disk — it's only ever been served from inside the jar via `classpath:`.
 
-1. Rotate the keystore password locally (`keytool -storepasswd`), then upload the resulting file once:
+1. Generate a brand-new self-signed keystore locally (new key pair, not a re-passworded copy of the old one — see rotation note above), then upload it once:
    ```
-   scp -i A4L.pem src/main/resources/certificate.p12 ec2-user@ec2-54-91-45-98.compute-1.amazonaws.com:~/certificate.p12
+   keytool -genkeypair -alias gym-progress-tracker -keyalg RSA -keysize 2048 -validity 3650 \
+     -storetype PKCS12 -keystore certificate-new.p12 -storepass <new-password> \
+     -dname "CN=ec2-54-91-45-98.compute-1.amazonaws.com"
+   scp -i A4L.pem certificate-new.p12 ec2-user@ec2-54-91-45-98.compute-1.amazonaws.com:~/certificate.p12
    ssh -i A4L.pem ec2-user@ec2-54-91-45-98.compute-1.amazonaws.com 'sudo mkdir -p /etc/gym-progress-tracker && sudo mv ~/certificate.p12 /etc/gym-progress-tracker/certificate.p12 && sudo chown root:root /etc/gym-progress-tracker/certificate.p12 && sudo chmod 600 /etc/gym-progress-tracker/certificate.p12'
    ```
 2. Create `/etc/gym-progress-tracker.env`, owned by root, mode `600`:
