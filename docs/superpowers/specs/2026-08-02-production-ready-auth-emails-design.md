@@ -40,6 +40,7 @@ The password reset and email verification flows (added in `6be80f8` and `97611f7
 spring.datasource.username=${DB_USERNAME:gym_user}
 spring.datasource.password=${DB_PASSWORD:gym_pass}
 
+server.ssl.key-store=${SSL_KEYSTORE_PATH:classpath:certificate.p12}
 server.ssl.key-store-password=${SSL_KEYSTORE_PASSWORD}
 
 jwt.secret=${JWT_SECRET}
@@ -50,7 +51,7 @@ spring.mail.password=${MAIL_PASSWORD}
 app.base-url=${APP_BASE_URL:https://localhost:8080}
 ```
 
-Local dev keeps working unchanged via the `:defaults`. Values with no default (`SSL_KEYSTORE_PASSWORD`, `JWT_SECRET`, `MAIL_USERNAME`, `MAIL_PASSWORD`) make the app fail fast on startup if unset, rather than silently running with a blank secret.
+Local dev keeps working unchanged via the `:defaults` — including the bundled `classpath:certificate.p12`. Values with no default (`SSL_KEYSTORE_PASSWORD`, `JWT_SECRET`, `MAIL_USERNAME`, `MAIL_PASSWORD`) make the app fail fast on startup if unset, rather than silently running with a blank secret. In prod, `SSL_KEYSTORE_PATH` is overridden to `file:/etc/gym-progress-tracker/certificate.p12`, so the keystore is no longer required to ship inside the jar.
 
 `docker-compose.yml`'s `POSTGRES_PASSWORD` becomes `${DB_PASSWORD:-gym_pass}`, read from a local `.env` file next to the compose file (gitignored) so the same variable name is used in both dev and prod.
 
@@ -59,7 +60,7 @@ Local dev keeps working unchanged via the `:defaults`. Values with no default (`
 - `git rm --cached src/main/resources/application.properties src/main/resources/certificate.p12`
 - Add both paths to `.gitignore`.
 - Re-add `application.properties` to git with only placeholders (per above) — this version is safe to track.
-- `certificate.p12` stays untracked; a copy already exists on the EC2 instance (deploy.yml never copies it, only the jar, so it must already be present there) — confirm this before removing it from the repo, and keep a local-only copy for dev.
+- `certificate.p12` stays untracked going forward; keep a local-only copy for dev (default `classpath:` lookup still needs it on the local build classpath, so it lives in `src/main/resources/` untracked, same directory, just gitignored).
 
 ### 4. Rotate leaked credentials
 
@@ -72,18 +73,26 @@ Regardless of the above, these values are permanently visible in git history and
 
 ### 5. EC2 configuration (manual, on the instance)
 
-1. Create `/etc/gym-progress-tracker.env`, owned by root, mode `600`:
+Confirmed on the live instance (`ec2-54-91-45-98.compute-1.amazonaws.com`): the service is running as `gym-progress-tracker.service`, jar lives at `/home/ec2-user/app/gym-progress-tracker.jar`, listens on `*:8080`, and there is currently no standalone `certificate.p12` on disk — it's only ever been served from inside the jar via `classpath:`.
+
+1. Rotate the keystore password locally (`keytool -storepasswd`), then upload the resulting file once:
+   ```
+   scp -i A4L.pem src/main/resources/certificate.p12 ec2-user@ec2-54-91-45-98.compute-1.amazonaws.com:~/certificate.p12
+   ssh -i A4L.pem ec2-user@ec2-54-91-45-98.compute-1.amazonaws.com 'sudo mkdir -p /etc/gym-progress-tracker && sudo mv ~/certificate.p12 /etc/gym-progress-tracker/certificate.p12 && sudo chown root:root /etc/gym-progress-tracker/certificate.p12 && sudo chmod 600 /etc/gym-progress-tracker/certificate.p12'
+   ```
+2. Create `/etc/gym-progress-tracker.env`, owned by root, mode `600`:
    ```
    DB_USERNAME=gym_user
    DB_PASSWORD=<rotated>
+   SSL_KEYSTORE_PATH=file:/etc/gym-progress-tracker/certificate.p12
    SSL_KEYSTORE_PASSWORD=<rotated>
    JWT_SECRET=<rotated>
    MAIL_USERNAME=harrisonbelanger@gmail.com
    MAIL_PASSWORD=<rotated app password>
-   APP_BASE_URL=https://<ec2-public-or-elastic-ip>:8080
+   APP_BASE_URL=https://ec2-54-91-45-98.compute-1.amazonaws.com:8080
    ```
-2. Add `EnvironmentFile=/etc/gym-progress-tracker.env` to the `[Service]` section of the `gym-progress-tracker.service` systemd unit, then `systemctl daemon-reload`.
-3. If Postgres runs via `docker-compose.yml` on the same instance, create a matching `.env` next to it with `DB_PASSWORD` so both processes agree on the password.
+3. Add `EnvironmentFile=/etc/gym-progress-tracker.env` to the `[Service]` section of the `gym-progress-tracker.service` systemd unit, then `systemctl daemon-reload`.
+4. If Postgres runs via `docker-compose.yml` on the same instance, create a matching `.env` next to it with `DB_PASSWORD` so both processes agree on the password.
 
 This is infra state on the user's box, not something applied through this repo — steps are handed off for the user to run over SSH.
 
@@ -100,4 +109,4 @@ A single `RateLimiter` component, `ConcurrentHashMap<String, Instant>` keyed by 
 
 ## Open questions / risks
 
-- Need to confirm `certificate.p12` already exists on the EC2 box before untracking it from git — if it doesn't, it needs to be generated and placed there as part of this rollout, or `deploy.yml` needs a step to provision it.
+- None outstanding — confirmed via SSH that the EC2 instance has no standalone keystore file today (it's bundled in the jar via `classpath:`), which is why the design externalizes it to `file:/etc/gym-progress-tracker/certificate.p12` rather than leaving it in git.
