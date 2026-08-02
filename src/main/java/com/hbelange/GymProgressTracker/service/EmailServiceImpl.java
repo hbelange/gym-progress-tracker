@@ -7,7 +7,6 @@ import java.util.Date;
 
 import javax.crypto.SecretKey;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -23,29 +22,17 @@ import io.jsonwebtoken.security.Keys;
 @Service
 public class EmailServiceImpl implements EmailService {
 
-    private JavaMailSender mailSender;
-
-    @Value("${jwt.secret}")
-    private String secretKey;
-
-    @Value("${app.base-url}")
-    private String baseUrl;
-
-    public EmailServiceImpl() {
-    }
+    private final JavaMailSender mailSender;
+    private final String secretKey;
+    private final String baseUrl;
 
     public EmailServiceImpl(
             JavaMailSender mailSender,
-            String secretKey,
-            String baseUrl) {
+            @Value("${jwt.secret}") String secretKey,
+            @Value("${app.base-url}") String baseUrl) {
         this.mailSender = mailSender;
         this.secretKey = secretKey;
         this.baseUrl = baseUrl;
-    }
-
-    @Autowired
-    public void setMailSender(JavaMailSender mailSender) {
-        this.mailSender = mailSender;
     }
 
     @Override
