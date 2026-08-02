@@ -58,5 +58,31 @@ public class EmailServiceImpl implements EmailService {
                 .signWith(key, Jwts.SIG.HS256)
                 .compact();
     }
+
+    private String createPasswordResetToken(String username) {
+        Instant now = Instant.now();
+        byte[] keyBytes = Decoders.BASE64.decode(secretKey);    // 256-bit Base64 encoded secret key
+        SecretKey key = Keys.hmacShaKeyFor(keyBytes);
+        
+        return Jwts.builder()
+                .subject(username)
+                .claim("purpose", "password_reset")
+                .issuedAt(Date.from(now))
+                .expiration(Date.from(now.plusSeconds(1800))) // Token valid for 30 mins
+                .signWith(key, Jwts.SIG.HS256)
+                .compact();
+    }
+
+    @Override
+    @Async
+    public void sendPasswordResetEmail(User user, String token) {
+        String resetLink = "https://localhost:8080/reset-password?token=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
+        String body = "Click the following link to reset your password: " + resetLink + "\n\nThis link will expire in 30 minutes.";
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo("harrisonbelanger@gmail.com"); // TODO: Replace with user.getEmail() in production
+        message.setSubject("Reset your password");
+        message.setText(body);
+        mailSender.send(message);
+    }
     
 }

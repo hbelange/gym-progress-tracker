@@ -26,7 +26,7 @@ public class WebAuthorizationConfig {
                 .failureHandler(loginFailureHandler())
                 .permitAll())
             .authorizeHttpRequests(auth -> auth
-                .requestMatchers("/error", "/register", "/register/pending", "/login", "/css/**", "/verify", "/resend-verification").permitAll()
+                .requestMatchers("/error", "/register", "/register/pending", "/login", "/css/**", "/verify", "/resend-verification", "/forgot-password", "/reset-password").permitAll()
                 .anyRequest().authenticated())
             .build();
     }
