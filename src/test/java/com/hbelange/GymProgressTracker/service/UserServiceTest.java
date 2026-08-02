@@ -32,15 +32,17 @@ public class UserServiceTest {
     private UserRepository userRepository;
 
     private String username;
+    private String email;
 
     @BeforeEach
     void setUp() {
         username = "reg-" + UUID.randomUUID();
+        email = username + "@example.com";
     }
 
     @Test
     void testRegisterUserReturnsIdAndUsername() {
-        UserResponseDTO result = userService.registerUser(new UserRequestDTO(username, "plaintext"));
+        UserResponseDTO result = userService.registerUser(new UserRequestDTO(email, username, "plaintext"));
 
         assertNotNull(result.id());
         assertEquals(username, result.username());
@@ -48,7 +50,7 @@ public class UserServiceTest {
 
     @Test
     void testRegisterUserStoresPasswordEncoded() {
-        userService.registerUser(new UserRequestDTO(username, "plaintext"));
+        userService.registerUser(new UserRequestDTO(email, username, "plaintext"));
 
         User saved = userRepository.findByUsername(username).orElseThrow();
         assertNotEquals("plaintext", saved.getPassword());
@@ -57,7 +59,7 @@ public class UserServiceTest {
     @Test
     @Transactional
     void testRegisterUserGrantsWriteAuthority() {
-        userService.registerUser(new UserRequestDTO(username, "password"));
+        userService.registerUser(new UserRequestDTO(email, username, "password"));
 
         User saved = userRepository.findByUsername(username).orElseThrow();
         assertEquals(1, saved.getAuthorities().size());
@@ -66,10 +68,10 @@ public class UserServiceTest {
 
     @Test
     void testRegisterUserWithDuplicateUsernameThrows() {
-        userService.registerUser(new UserRequestDTO(username, "password"));
+        userService.registerUser(new UserRequestDTO(email, username, "password"));
 
         assertThrows(UserAlreadyExistsException.class, () -> {
-            userService.registerUser(new UserRequestDTO(username, "differentPassword"));
+            userService.registerUser(new UserRequestDTO("different-" + email, username, "differentPassword"));
         });
     }
 

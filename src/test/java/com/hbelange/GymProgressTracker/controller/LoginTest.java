@@ -19,6 +19,8 @@ import org.springframework.test.web.servlet.MockMvc;
 
 import com.hbelange.GymProgressTracker.TestcontainersConfiguration;
 import com.hbelange.GymProgressTracker.dto.UserRequestDTO;
+import com.hbelange.GymProgressTracker.entity.User;
+import com.hbelange.GymProgressTracker.repository.UserRepository;
 import com.hbelange.GymProgressTracker.service.UserService;
 
 @SpringBootTest
@@ -34,12 +36,19 @@ public class LoginTest {
     @Autowired
     private UserService userService;
 
+    @Autowired
+    private UserRepository userRepository;
+
     private String username;
 
     @BeforeEach
     void setUp() {
         username = "login-" + UUID.randomUUID();
-        userService.registerUser(new UserRequestDTO(username, PASSWORD));
+        userService.registerUser(new UserRequestDTO(username + "@example.com", username, PASSWORD));
+
+        User user = userRepository.findByUsername(username).orElseThrow();
+        user.setEnabled(1);
+        userRepository.save(user);
     }
 
     @Test
@@ -77,6 +86,17 @@ public class LoginTest {
                 .andExpect(unauthenticated())
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login?error"));
+    }
+
+    @Test
+    void loginWithUnverifiedAccountFails() throws Exception {
+        String unverifiedUsername = "unverified-" + UUID.randomUUID();
+        userService.registerUser(new UserRequestDTO(unverifiedUsername + "@example.com", unverifiedUsername, PASSWORD));
+
+        mockMvc.perform(formLogin().user(unverifiedUsername).password(PASSWORD))
+                .andExpect(unauthenticated())
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login?unverified&username=" + unverifiedUsername));
     }
 
 }
