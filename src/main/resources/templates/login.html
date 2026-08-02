@@ -14,6 +14,7 @@
 
     <p class="message message-error" th:if="${param.error}">Invalid username or password.</p>
     <p class="message message-success" th:if="${param.verified}">Verification successful. Please log in.</p>
+    <p class="message message-success" th:if="${param.passwordReset}">Password reset successful. Please log in.</p>
 
     <div th:if="${param.unverified}">
         <p class="message message-error">Please verify your email before logging in.</p>
@@ -33,6 +34,7 @@
         <button type="submit">Login</button>
     </form>
 
+    <p><a th:href="@{/forgot-password}">Forgot password?</a></p>
     <p>Don't have an account? <a th:href="@{/register}">Register</a></p>
 </body>
 </html>

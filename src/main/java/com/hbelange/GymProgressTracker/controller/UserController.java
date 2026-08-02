@@ -11,6 +11,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.hbelange.GymProgressTracker.dto.NewPasswordDTO;
+import com.hbelange.GymProgressTracker.dto.PasswordResetDTO;
 import com.hbelange.GymProgressTracker.dto.UserRequestDTO;
 import com.hbelange.GymProgressTracker.dto.UserResponseDTO;
 import com.hbelange.GymProgressTracker.exception.UserAlreadyExistsException;
@@ -42,6 +44,19 @@ public class UserController {
         } catch (RuntimeException e) {
             return "redirect:/login?error=" + e.getMessage(); // Redirect to login page with an error message
         }
+    }
+
+    @GetMapping("/reset-password")
+    public String showResetPasswordForm(@RequestParam String token, Model model) {
+        try {
+            // Here you might want to validate the token before showing the form
+            userService.validatePasswordResetToken(token); // This is just an example; you might have a separate method for token validation
+        } catch (RuntimeException e) {
+            model.addAttribute("error", e.getMessage());
+            return "reset-password"; // Redirect to an error page or show an error message
+        }
+        model.addAttribute("token", token);
+        return "reset-password";
     }
 
     @GetMapping("/register")
@@ -79,6 +94,32 @@ public class UserController {
         return "redirect:/register/pending";
     }
 
-    
+    @GetMapping("/forgot-password")
+    public String showForgotPasswordForm() {
+        return "forgot-password";
+    }
+
+    @PostMapping("/forgot-password")
+    public String resetPassword(@Valid @ModelAttribute PasswordResetDTO passwordResetDTO, BindingResult bindingResult, Model model) {
+        if (bindingResult.hasErrors()) {
+            model.addAttribute("error", "Please enter a valid email address.");
+            return "forgot-password";
+        }
+        userService.handlePasswordReset(passwordResetDTO.email());
+        return "redirect:/forgot-password?sent"; // Redirect to a page indicating that the reset email has been sent
+    }
+
+    @PostMapping("/reset-password")
+    public String resetPasswordFromForm(@Valid @ModelAttribute NewPasswordDTO newPasswordDTO, BindingResult bindingResult) {
+        if (bindingResult.hasErrors()) {
+            return "redirect:/reset-password?token=" + newPasswordDTO.token() + "&error=Please fill in all required fields.";
+        }
+        try {
+            userService.resetPassword(newPasswordDTO);
+        } catch (RuntimeException e) {
+            return "redirect:/reset-password?token=" + newPasswordDTO.token() + "&error=" + e.getMessage();
+        }
+        return "redirect:/login?passwordReset"; // Redirect to login page with a password reset success message
+    }
 
 }
