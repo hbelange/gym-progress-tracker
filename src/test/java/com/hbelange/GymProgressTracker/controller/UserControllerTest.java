@@ -27,14 +27,16 @@ public class UserControllerTest {
     private MockMvc mockMvc;
 
     private String username;
+    private String email;
 
     @BeforeEach
     void setUp() {
         username = "reg-ctrl-" + UUID.randomUUID();
+        email = username + "@example.com";
     }
 
     private String requestBody(String username, String password) {
-        return "{\"username\":\"" + username + "\",\"password\":\"" + password + "\"}";
+        return "{\"email\":\"" + username + "@example.com\",\"username\":\"" + username + "\",\"password\":\"" + password + "\"}";
     }
 
     @Test
