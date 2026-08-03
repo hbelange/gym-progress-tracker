@@ -6,9 +6,9 @@ import com.hbelange.GymProgressTracker.dto.ExerciseRequestDTO;
 import com.hbelange.GymProgressTracker.dto.ExerciseResponseDTO;
 
 public interface ExerciseService {
-    public ExerciseResponseDTO createExercise(ExerciseRequestDTO exerciseRequestDTO, String username);
+    public ExerciseResponseDTO createExercise(ExerciseRequestDTO exerciseRequestDTO, Long userId);
 
-    public List<ExerciseResponseDTO> getAllExercises(String username);
+    public List<ExerciseResponseDTO> getAllExercises(Long userId);
 
     public void deleteExercise(Long exerciseId);
 

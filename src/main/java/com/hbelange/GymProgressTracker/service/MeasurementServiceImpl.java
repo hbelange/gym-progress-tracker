@@ -26,9 +26,9 @@ public class MeasurementServiceImpl implements MeasurementService {
     }
 
     @Override
-    public MeasurementResponseDTO createMeasurement(MeasurementRequestDTO measurementRequestDTO, String username) {
-        User user = userRepository.findByUsername(username)
-            .orElseThrow(() -> new EntityNotFoundException("User not found: " + username));
+    public MeasurementResponseDTO createMeasurement(MeasurementRequestDTO measurementRequestDTO, Long userId) {
+        User user = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
         
         Measurement measurement = new Measurement();
         measurement.setDate(measurementRequestDTO.date());
@@ -40,15 +40,15 @@ public class MeasurementServiceImpl implements MeasurementService {
     }
 
     @Override
-    public List<MeasurementResponseDTO> getMeasurements(String username) {
-        List<Measurement> measurements = measurementRepository.findAllByUser_Username(username);
+    public List<MeasurementResponseDTO> getMeasurements(Long userId) {
+        List<Measurement> measurements = measurementRepository.findAllByUser_Id(userId);
         return measurements.stream()
                 .map(measurement -> new MeasurementResponseDTO(measurement.getId(), measurement.getDate(), measurement.getType(), measurement.getValue()))
                 .toList();
     }
 
     @Override
-    @PreAuthorize("@measurementRepository.existsByIdAndUser_Username(#measurementId, authentication.name)")
+    @PreAuthorize("@measurementRepository.existsByIdAndUser_Id(#measurementId, authentication.name)")
     public MeasurementResponseDTO updateMeasurement(Long measurementId, MeasurementRequestDTO measurementRequestDTO) {
         Measurement measurement = measurementRepository.findById(measurementId)
             .orElseThrow(() -> new EntityNotFoundException("Measurement not found with id: " + measurementId));
@@ -61,7 +61,7 @@ public class MeasurementServiceImpl implements MeasurementService {
     }
 
     @Override
-    @PreAuthorize("@measurementRepository.existsByIdAndUser_Username(#measurementId, authentication.name)")
+    @PreAuthorize("@measurementRepository.existsByIdAndUser_Id(#measurementId, authentication.name)")
     public void deleteMeasurement(Long measurementId) {
         measurementRepository.deleteById(measurementId);
     }

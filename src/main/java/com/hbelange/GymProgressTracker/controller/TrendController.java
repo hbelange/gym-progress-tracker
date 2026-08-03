@@ -65,14 +65,14 @@ public class TrendController {
     ) {
         MeasurementType measurementType = MeasurementType.fromString(type);
         TrendRange trendRange = TrendRange.fromString(range);
-        MeasurementTrendResponseDTO trend = trendService.getMeasurementTrend(authentication.getName(), measurementType, trendRange);
+        MeasurementTrendResponseDTO trend = trendService.getMeasurementTrend(Long.valueOf(authentication.getName()), measurementType, trendRange);
         return ResponseEntity.ok(trend);
     }
 
     @GetMapping("/api/trend/exercises")
     @ResponseBody
     public ResponseEntity<List<ExerciseActivityDTO>> getExercisesByRecentActivity(Authentication authentication) {
-        List<ExerciseActivityDTO> exercises = trendService.getExercisesByRecentActivity(authentication.getName());
+        List<ExerciseActivityDTO> exercises = trendService.getExercisesByRecentActivity(Long.valueOf(authentication.getName()));
         return ResponseEntity.ok(exercises);
     }
 
@@ -84,7 +84,7 @@ public class TrendController {
         Authentication authentication
     ) {
         TrendRange trendRange = TrendRange.fromString(range);
-        ExerciseTrendResponseDTO trend = trendService.getExerciseTrend(authentication.getName(), exerciseId, trendRange);
+        ExerciseTrendResponseDTO trend = trendService.getExerciseTrend(Long.valueOf(authentication.getName()), exerciseId, trendRange);
         return ResponseEntity.ok(trend);
     }
     

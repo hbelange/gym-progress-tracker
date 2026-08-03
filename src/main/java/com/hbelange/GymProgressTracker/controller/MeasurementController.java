@@ -61,14 +61,14 @@ public class MeasurementController {
     @GetMapping("/api/measurement")
     @ResponseBody
     public ResponseEntity<List<MeasurementResponseDTO>> getMeasurements(Authentication authentication) {
-        List<MeasurementResponseDTO> measurements = measurementService.getMeasurements(authentication.getName());
+        List<MeasurementResponseDTO> measurements = measurementService.getMeasurements(Long.valueOf(authentication.getName()));
         return ResponseEntity.ok(measurements);
     }   
 
     @PostMapping("/api/measurement")
     @ResponseBody
     public ResponseEntity<MeasurementResponseDTO> createMeasurement(@Valid @RequestBody MeasurementRequestDTO measurementRequestDTO, Authentication authentication) {
-        MeasurementResponseDTO createdMeasurement = measurementService.createMeasurement(measurementRequestDTO, authentication.getName());
+        MeasurementResponseDTO createdMeasurement = measurementService.createMeasurement(measurementRequestDTO, Long.valueOf(authentication.getName()));
         return ResponseEntity.status(201).body(createdMeasurement);
     }
 

@@ -39,14 +39,14 @@ public class ExerciseController {
     @PostMapping("/api/exercise")
     @ResponseBody
     public ResponseEntity<ExerciseResponseDTO> createExercise(@Valid @RequestBody ExerciseRequestDTO exerciseRequestDTO, Authentication authentication) {
-        ExerciseResponseDTO exercise = exerciseService.createExercise(exerciseRequestDTO, authentication.getName());
+        ExerciseResponseDTO exercise = exerciseService.createExercise(exerciseRequestDTO, Long.valueOf(authentication.getName()));
         return ResponseEntity.ok(exercise);
     }
 
     @GetMapping("/api/exercise")
     @ResponseBody
     public ResponseEntity<List<ExerciseResponseDTO>> getAllExercises(Authentication authentication) {
-        List<ExerciseResponseDTO> exercises = exerciseService.getAllExercises(authentication.getName());
+        List<ExerciseResponseDTO> exercises = exerciseService.getAllExercises(Long.valueOf(authentication.getName()));
         return ResponseEntity.ok(exercises);
     }
 

@@ -41,7 +41,7 @@ public class WorkoutTypeController {
     @GetMapping("/api/workoutType")
     @ResponseBody
     public ResponseEntity<List<WorkoutTypeResponseDTO>> getAllWorkoutTypes(Authentication authentication) {
-        List<WorkoutTypeResponseDTO> workoutTypes = workoutTypeService.getAllWorkoutTypes(authentication.getName());
+        List<WorkoutTypeResponseDTO> workoutTypes = workoutTypeService.getAllWorkoutTypes(Long.valueOf(authentication.getName()));
         return ResponseEntity.ok(workoutTypes);
     }
 
@@ -62,7 +62,7 @@ public class WorkoutTypeController {
     @PostMapping("/api/workoutType")
     @ResponseBody
     public ResponseEntity<WorkoutTypeResponseDTO> postMethodName(@Valid @RequestBody WorkoutTypeRequestDTO workoutTypeRequestDTO, Authentication authentication) {
-        WorkoutTypeResponseDTO createdWorkoutType = workoutTypeService.createWorkoutType(workoutTypeRequestDTO, authentication.getName());
+        WorkoutTypeResponseDTO createdWorkoutType = workoutTypeService.createWorkoutType(workoutTypeRequestDTO, Long.valueOf(authentication.getName()));
         return ResponseEntity.status(HttpStatus.CREATED).body(createdWorkoutType);
     }
     

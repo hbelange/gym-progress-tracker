@@ -10,7 +10,9 @@ import org.springframework.data.jpa.repository.JpaRepository;
 public interface WorkoutTypeRepository extends JpaRepository<WorkoutType, Long> {
     List<WorkoutType> findAllByUser_Username(String username);
 
-    boolean existsByIdAndUser_Username(Long id, String username);
+    boolean existsByIdAndUser_Id(Long id, Long userId);
 
-    Optional<WorkoutType> findByIdAndUser_Username(Long id, String username);
+    Optional<WorkoutType> findByIdAndUser_Id(Long id, Long userId);
+
+    List<WorkoutType> findAllByUser_Id(Long userId);
 }
