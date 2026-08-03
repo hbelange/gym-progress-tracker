@@ -4,7 +4,7 @@ import java.time.LocalDate;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -18,6 +18,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import com.hbelange.GymProgressTracker.dto.MeasurementRequestDTO;
 import com.hbelange.GymProgressTracker.dto.MeasurementResponseDTO;
+import com.hbelange.GymProgressTracker.security.SecurityUser;
 import com.hbelange.GymProgressTracker.service.MeasurementService;
 import com.hbelange.GymProgressTracker.web.MonthCalendarView;
 
@@ -60,15 +61,15 @@ public class MeasurementController {
 
     @GetMapping("/api/measurement")
     @ResponseBody
-    public ResponseEntity<List<MeasurementResponseDTO>> getMeasurements(Authentication authentication) {
-        List<MeasurementResponseDTO> measurements = measurementService.getMeasurements(Long.valueOf(authentication.getName()));
+    public ResponseEntity<List<MeasurementResponseDTO>> getMeasurements(@AuthenticationPrincipal SecurityUser user) {
+        List<MeasurementResponseDTO> measurements = measurementService.getMeasurements(user.getId());
         return ResponseEntity.ok(measurements);
-    }   
+    }
 
     @PostMapping("/api/measurement")
     @ResponseBody
-    public ResponseEntity<MeasurementResponseDTO> createMeasurement(@Valid @RequestBody MeasurementRequestDTO measurementRequestDTO, Authentication authentication) {
-        MeasurementResponseDTO createdMeasurement = measurementService.createMeasurement(measurementRequestDTO, Long.valueOf(authentication.getName()));
+    public ResponseEntity<MeasurementResponseDTO> createMeasurement(@Valid @RequestBody MeasurementRequestDTO measurementRequestDTO, @AuthenticationPrincipal SecurityUser user) {
+        MeasurementResponseDTO createdMeasurement = measurementService.createMeasurement(measurementRequestDTO, user.getId());
         return ResponseEntity.status(201).body(createdMeasurement);
     }
 

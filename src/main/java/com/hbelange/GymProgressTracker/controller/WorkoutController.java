@@ -3,7 +3,7 @@ package com.hbelange.GymProgressTracker.controller;
 import java.time.LocalDate;
 import java.util.List;
 
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
@@ -21,6 +21,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import com.hbelange.GymProgressTracker.dto.SetResponseDTO;
 import com.hbelange.GymProgressTracker.dto.WorkoutRequestDTO;
 import com.hbelange.GymProgressTracker.dto.WorkoutResponseDTO;
+import com.hbelange.GymProgressTracker.security.SecurityUser;
 import com.hbelange.GymProgressTracker.service.WorkoutService;
 import com.hbelange.GymProgressTracker.web.MonthCalendarView;
 
@@ -58,15 +59,15 @@ public class WorkoutController {
 
     @GetMapping("/api/workouts")
     @ResponseBody
-    public ResponseEntity<List<WorkoutResponseDTO>> getAllWorkouts(Authentication authentication) {
-        List<WorkoutResponseDTO> workouts = workoutService.getAllWorkouts(Long.valueOf(authentication.getName()));
+    public ResponseEntity<List<WorkoutResponseDTO>> getAllWorkouts(@AuthenticationPrincipal SecurityUser user) {
+        List<WorkoutResponseDTO> workouts = workoutService.getAllWorkouts(user.getId());
         return ResponseEntity.ok(workouts);
     }
 
     @PostMapping("/api/workouts")
     @ResponseBody
-    public ResponseEntity<WorkoutResponseDTO> createWorkout(@Valid @RequestBody WorkoutRequestDTO workoutRequestDTO, Authentication authentication) {
-        WorkoutResponseDTO workout = workoutService.createWorkout(workoutRequestDTO, Long.valueOf(authentication.getName()));
+    public ResponseEntity<WorkoutResponseDTO> createWorkout(@Valid @RequestBody WorkoutRequestDTO workoutRequestDTO, @AuthenticationPrincipal SecurityUser user) {
+        WorkoutResponseDTO workout = workoutService.createWorkout(workoutRequestDTO, user.getId());
         return ResponseEntity.ok(workout);
     }
 
