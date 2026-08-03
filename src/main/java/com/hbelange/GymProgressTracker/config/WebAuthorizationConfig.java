@@ -15,14 +15,17 @@ import org.springframework.security.web.authentication.AuthenticationFailureHand
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
+import com.hbelange.GymProgressTracker.security.CustomAuthenticationProvider;
+
 @Configuration
 @EnableMethodSecurity
 public class WebAuthorizationConfig {
 
     @Bean
-    SecurityFilterChain configure(HttpSecurity http) throws Exception {
+    SecurityFilterChain configure(HttpSecurity http, CustomAuthenticationProvider customAuthenticationProvider) throws Exception {
 
         return http
+            .authenticationProvider(customAuthenticationProvider)
             .formLogin(form -> form
                 .loginPage("/login")
                 .failureHandler(loginFailureHandler())
