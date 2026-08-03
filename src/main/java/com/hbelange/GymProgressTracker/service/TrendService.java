@@ -9,9 +9,9 @@ import com.hbelange.GymProgressTracker.entity.MeasurementType;
 import com.hbelange.GymProgressTracker.dto.ExerciseActivityDTO;
 
 public interface TrendService {
-    MeasurementTrendResponseDTO getMeasurementTrend(String username, MeasurementType type, TrendRange range);
+    MeasurementTrendResponseDTO getMeasurementTrend(Long userId, MeasurementType type, TrendRange range);
 
-    ExerciseTrendResponseDTO getExerciseTrend(String string, Long id, TrendRange week);
+    ExerciseTrendResponseDTO getExerciseTrend(Long userId, Long id, TrendRange week);
 
-    List<ExerciseActivityDTO> getExercisesByRecentActivity(String username);
+    List<ExerciseActivityDTO> getExercisesByRecentActivity(Long userId);
 }

@@ -7,9 +7,9 @@ import com.hbelange.GymProgressTracker.dto.MeasurementResponseDTO;
 
 public interface MeasurementService {
 
-    public MeasurementResponseDTO createMeasurement(MeasurementRequestDTO measurementRequestDTO, String username);
+    public MeasurementResponseDTO createMeasurement(MeasurementRequestDTO measurementRequestDTO, Long userId);
 
-    public List<MeasurementResponseDTO> getMeasurements(String username);
+    public List<MeasurementResponseDTO> getMeasurements(Long userId);
 
     public MeasurementResponseDTO updateMeasurement(Long measurementId, MeasurementRequestDTO measurementRequestDTO);
     

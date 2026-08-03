@@ -9,9 +9,9 @@ import com.hbelange.GymProgressTracker.dto.WorkoutResponseDTO;
 
 public interface WorkoutService {
 
-    WorkoutResponseDTO createWorkout(WorkoutRequestDTO workoutRequestDTO, String username);
+    WorkoutResponseDTO createWorkout(WorkoutRequestDTO workoutRequestDTO, Long userId);
 
-    List<WorkoutResponseDTO> getAllWorkouts(String username);
+    List<WorkoutResponseDTO> getAllWorkouts(Long userId);
 
     WorkoutResponseDTO getWorkoutById(Long id);
 

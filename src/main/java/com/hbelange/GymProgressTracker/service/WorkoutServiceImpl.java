@@ -40,11 +40,11 @@ public class WorkoutServiceImpl implements WorkoutService {
     }
 
     @Override
-    public WorkoutResponseDTO createWorkout(WorkoutRequestDTO workoutRequestDTO, String username) {
-        User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new IllegalStateException("Authenticated user not found: " + username));
+    public WorkoutResponseDTO createWorkout(WorkoutRequestDTO workoutRequestDTO, Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalStateException("Authenticated user not found: " + userId));
 
-        WorkoutType workoutType = workoutTypeRepository.findByIdAndUser_Username(workoutRequestDTO.workoutTypeId(), username)
+        WorkoutType workoutType = workoutTypeRepository.findByIdAndUser_Id(workoutRequestDTO.workoutTypeId(), userId)
                 .orElseThrow(() -> new EntityNotFoundException("Workout type not found"));
 
         Workout workout = new Workout();
@@ -56,15 +56,15 @@ public class WorkoutServiceImpl implements WorkoutService {
     }
 
     @Override
-    public List<WorkoutResponseDTO> getAllWorkouts(String username) {
-        List<Workout> workouts = workoutRepository.findAllByUser_Username(username);
+    public List<WorkoutResponseDTO> getAllWorkouts(Long userId) {
+        List<Workout> workouts = workoutRepository.findAllByUser_Id(userId);
         return workouts.stream()
                 .map(workout -> new WorkoutResponseDTO(workout.getId(), workout.getDate(), workout.getUser().getUsername(), workout.getWorkoutType().getName()))
                 .toList();
     }
 
     @Override
-    @PreAuthorize("@workoutRepository.existsByIdAndUser_Username(#id, authentication.name)")
+    @PreAuthorize("@workoutRepository.existsByIdAndUser_Id(#id, authentication.name)")
     public WorkoutResponseDTO getWorkoutById(Long id) {
         Workout workout = workoutRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Workout not found with id: " + id));
@@ -72,12 +72,12 @@ public class WorkoutServiceImpl implements WorkoutService {
     }
 
     @Override
-    @PreAuthorize("@workoutRepository.existsByIdAndUser_Username(#id, authentication.name)")
+    @PreAuthorize("@workoutRepository.existsByIdAndUser_Id(#id, authentication.name)")
     public WorkoutResponseDTO updateWorkout(Long id, WorkoutRequestDTO workoutRequestDTO) {
         Workout workout = workoutRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Workout not found with id: " + id));
 
-        WorkoutType workoutType = workoutTypeRepository.findByIdAndUser_Username(workoutRequestDTO.workoutTypeId(), workout.getUser().getUsername())
+        WorkoutType workoutType = workoutTypeRepository.findByIdAndUser_Id(workoutRequestDTO.workoutTypeId(), workout.getUser().getId())
                 .orElseThrow(() -> new EntityNotFoundException("Workout type not found"));
 
         workout.setDate(workoutRequestDTO.date());
@@ -87,7 +87,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     }
 
     @Override
-    @PreAuthorize("@workoutRepository.existsByIdAndUser_Username(#id, authentication.name)")
+    @PreAuthorize("@workoutRepository.existsByIdAndUser_Id(#id, authentication.name)")
     public void deleteWorkout(Long id) {
         workoutRepository.deleteById(id);
     }
@@ -164,7 +164,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     }
 
     @Override
-    @PreAuthorize("@workoutRepository.existsByIdAndUser_Username(#workoutId, authentication.name)")
+    @PreAuthorize("@workoutRepository.existsByIdAndUser_Id(#workoutId, authentication.name)")
     public List<SetResponseDTO> getSetsByWorkoutId(Long workoutId) {
         List<Set> sets = setRepository.findAllByWorkout_Id(workoutId);
         return sets.stream()

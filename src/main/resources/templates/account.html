@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}" />
+    <meta name="_csrf_header" th:content="${_csrf.headerName}" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Account - Gym Progress Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@600;700&family=Public+Sans:wght@400;600;700&family=IBM+Plex+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <header class="page-header">
+        <a class="back" href="/">&larr; Home</a>
+        <h1>Account</h1>
+    </header>
+
+    <p class="message message-success" th:if="${param.emailChangeVerified}">Email change confirmed.</p>
+    <p class="message message-error" th:if="${param.error}" th:text="${param.error}"></p>
+
+    <div class="status-card">
+        <h2>Profile</h2>
+        <div class="row">
+            <span>Username</span>
+            <span class="value" id="account-username"></span>
+        </div>
+        <div class="row">
+            <span>Email</span>
+            <span class="value" id="account-email"></span>
+        </div>
+        <p id="account-pending" class="message message-success" style="display:none;"></p>
+    </div>
+
+    <div class="status-card">
+        <h2>Change Username</h2>
+        <form id="username-form">
+            <label for="new-username">New username</label>
+            <input type="text" id="new-username" required />
+            <button type="submit">Update Username</button>
+        </form>
+    </div>
+
+    <div class="status-card">
+        <h2>Change Email</h2>
+        <form id="email-form">
+            <label for="new-email">New email</label>
+            <input type="email" id="new-email" required />
+            <button type="submit">Send Verification</button>
+        </form>
+        <button type="button" id="cancel-email-change" class="delete" style="display:none; margin-top: 12px;">Cancel pending change</button>
+    </div>
+
+    <script>
+        const csrfToken = document.querySelector('meta[name="_csrf"]').content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]').content;
+
+        function renderAccount(account) {
+            document.getElementById('account-username').textContent = account.username;
+            document.getElementById('account-email').textContent = account.email;
+
+            const pending = document.getElementById('account-pending');
+            const cancelBtn = document.getElementById('cancel-email-change');
+            if (account.pendingEmail) {
+                pending.textContent = `Pending change to ${account.pendingEmail}. Check your inbox to confirm.`;
+                pending.style.display = 'block';
+                cancelBtn.style.display = 'inline-block';
+            } else {
+                pending.style.display = 'none';
+                cancelBtn.style.display = 'none';
+            }
+        }
+
+        async function loadAccount() {
+            const res = await fetch('/api/account');
+            renderAccount(await res.json());
+        }
+
+        document.getElementById('username-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newUsername = document.getElementById('new-username').value.trim();
+            const res = await fetch('/api/account/username', {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                body: JSON.stringify({ newUsername })
+            });
+            if (res.ok) {
+                renderAccount(await res.json());
+                document.getElementById('new-username').value = '';
+            }
+        });
+
+        document.getElementById('email-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const newEmail = document.getElementById('new-email').value.trim();
+            const res = await fetch('/api/account/email', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', [csrfHeader]: csrfToken },
+                body: JSON.stringify({ newEmail })
+            });
+            if (res.ok) {
+                renderAccount(await res.json());
+                document.getElementById('new-email').value = '';
+            }
+        });
+
+        document.getElementById('cancel-email-change').addEventListener('click', async () => {
+            const res = await fetch('/api/account/email', {
+                method: 'DELETE',
+                headers: { [csrfHeader]: csrfToken }
+            });
+            if (res.ok) {
+                renderAccount(await res.json());
+            }
+        });
+
+        loadAccount();
+    </script>
+</body>
+</html>

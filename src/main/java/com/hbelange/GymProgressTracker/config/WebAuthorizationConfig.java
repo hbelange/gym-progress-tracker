@@ -5,19 +5,21 @@ import java.nio.charset.StandardCharsets;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.annotation.Order;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
+import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 @Configuration
 @EnableMethodSecurity
 public class WebAuthorizationConfig {
 
     @Bean
-    @Order(3)
     SecurityFilterChain configure(HttpSecurity http) throws Exception {
 
         return http
@@ -25,8 +27,13 @@ public class WebAuthorizationConfig {
                 .loginPage("/login")
                 .failureHandler(loginFailureHandler())
                 .permitAll())
+            .exceptionHandling(exceptions -> exceptions
+                .defaultAuthenticationEntryPointFor(
+                    new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
+                    PathPatternRequestMatcher.withDefaults().matcher("/api/**")))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/error", "/register", "/register/pending", "/login", "/css/**", "/verify", "/resend-verification", "/forgot-password", "/reset-password").permitAll()
+                .requestMatchers(HttpMethod.POST, "/api/register").permitAll()
                 .anyRequest().authenticated())
             .build();
     }

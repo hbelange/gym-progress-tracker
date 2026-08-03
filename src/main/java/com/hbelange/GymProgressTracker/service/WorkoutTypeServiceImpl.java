@@ -26,9 +26,9 @@ public class WorkoutTypeServiceImpl implements WorkoutTypeService {
     }
 
     @Override
-    public WorkoutTypeResponseDTO createWorkoutType(WorkoutTypeRequestDTO workoutTypeRequestDTO, String username) {
-        User owner = userRepository.findByUsername(username)
-            .orElseThrow(() -> new EntityNotFoundException("User not found: " + username));
+    public WorkoutTypeResponseDTO createWorkoutType(WorkoutTypeRequestDTO workoutTypeRequestDTO, Long userId) {
+        User owner = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
         
         WorkoutType workoutType = new WorkoutType();
         workoutType.setName(workoutTypeRequestDTO.name());
@@ -38,16 +38,16 @@ public class WorkoutTypeServiceImpl implements WorkoutTypeService {
     }
 
     @Override
-    public List<WorkoutTypeResponseDTO> getAllWorkoutTypes(String username) {
+    public List<WorkoutTypeResponseDTO> getAllWorkoutTypes(Long userId) {
         
-        List<WorkoutType> workoutTypes = workoutTypeRepository.findAllByUser_Username(username);
+        List<WorkoutType> workoutTypes = workoutTypeRepository.findAllByUser_Id(userId);
         return workoutTypes.stream()
                 .map(workoutType -> new WorkoutTypeResponseDTO(workoutType.getId(), workoutType.getName()))
                 .toList();        
     }
 
     @Override
-    @PreAuthorize("@workoutTypeRepository.existsByIdAndUser_Username(#id, authentication.name)")
+    @PreAuthorize("@workoutTypeRepository.existsByIdAndUser_Id(#id, authentication.name)")
     public WorkoutTypeResponseDTO updateWorkoutType(Long id, WorkoutTypeRequestDTO workoutTypeRequestDTO) {
         WorkoutType workoutType = workoutTypeRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Workout type not found with id: " + id));
@@ -58,7 +58,7 @@ public class WorkoutTypeServiceImpl implements WorkoutTypeService {
     }
 
     @Override
-    @PreAuthorize("@workoutTypeRepository.existsByIdAndUser_Username(#id, authentication.name)")
+    @PreAuthorize("@workoutTypeRepository.existsByIdAndUser_Id(#id, authentication.name)")
     public void deleteWorkoutType(Long id) {
         workoutTypeRepository.deleteById(id);
     }

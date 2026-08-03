@@ -17,15 +17,19 @@ import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import com.hbelange.GymProgressTracker.dto.AccountResponseDTO;
 import com.hbelange.GymProgressTracker.dto.NewPasswordDTO;
 import com.hbelange.GymProgressTracker.dto.UserRequestDTO;
 import com.hbelange.GymProgressTracker.dto.UserResponseDTO;
 import com.hbelange.GymProgressTracker.entity.Authority;
 import com.hbelange.GymProgressTracker.entity.PasswordResetToken;
+import com.hbelange.GymProgressTracker.entity.PendingEmailChange;
 import com.hbelange.GymProgressTracker.entity.User;
 import com.hbelange.GymProgressTracker.exception.UserAlreadyExistsException;
 import com.hbelange.GymProgressTracker.repository.PasswordResetTokenRepository;
+import com.hbelange.GymProgressTracker.repository.PendingEmailChangeRepository;
 import com.hbelange.GymProgressTracker.repository.UserRepository;
 
 import io.jsonwebtoken.Claims;
@@ -42,6 +46,7 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final PasswordResetTokenRepository tokenRepository;
+    private final PendingEmailChangeRepository pendingEmailChangeRepository;
 
     @Value("${jwt.secret}")
     private String secretKey;
@@ -49,11 +54,12 @@ public class UserServiceImpl implements UserService {
     private static final SecureRandom secureRandom = new SecureRandom();
     private static final Base64.Encoder base64Encoder = Base64.getUrlEncoder().withoutPadding();
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, EmailService emailService, PasswordResetTokenRepository tokenRepository) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, EmailService emailService, PasswordResetTokenRepository tokenRepository, PendingEmailChangeRepository pendingEmailChangeRepository) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.tokenRepository = tokenRepository;
+        this.pendingEmailChangeRepository = pendingEmailChangeRepository;
     }
 
     private String generateRandomToken() {
@@ -176,4 +182,98 @@ public class UserServiceImpl implements UserService {
         tokenRepository.delete(resetToken);
         
     }
+
+    @Override
+    public AccountResponseDTO getAccount(Long userId) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        PendingEmailChange pendingEmailChange = pendingEmailChangeRepository.findByUser(user);
+
+        return new AccountResponseDTO(user.getUsername(), user.getEmail(), pendingEmailChange != null ? pendingEmailChange.getNewEmail() : null);
+    }
+
+    @Override
+    public AccountResponseDTO updateUsername(Long userId, String newUsername) {
+        
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (userRepository.findByUsername(newUsername).isPresent()) {
+            throw new RuntimeException("Username already exists");
+        }
+
+        user.setUsername(newUsername);
+        userRepository.save(user);
+
+        PendingEmailChange pendingEmailChange = pendingEmailChangeRepository.findByUser(user);
+
+        return new AccountResponseDTO(user.getUsername(), user.getEmail(), pendingEmailChange != null ? pendingEmailChange.getNewEmail() : null);
+    }
+
+    @Override
+    @Transactional
+    public AccountResponseDTO changeEmail(Long userId, String newEmail) {
+        
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Check if the new email is already in use
+        if (userRepository.findByEmail(newEmail).isPresent()) {
+            throw new RuntimeException("Email already in use");
+        }
+
+        // Generate a token for email change verification
+        String token = generateRandomToken();
+
+        // before saving a new PendingEmailChange, delete any existing one for this user
+        // flush so the delete hits the DB before the identity insert below, avoiding a unique constraint violation
+        pendingEmailChangeRepository.deleteByUser_Id(user.getId());
+        pendingEmailChangeRepository.flush();
+
+        PendingEmailChange pendingEmailChange = new PendingEmailChange();
+        pendingEmailChange.setNewEmail(newEmail);
+        pendingEmailChange.setUser(user);
+        pendingEmailChange.setToken(token);
+        pendingEmailChange.setExpiresAt(LocalDateTime.now().plusMinutes(15)); // Token valid for 15 mins
+        pendingEmailChangeRepository.save(pendingEmailChange);
+
+        emailService.sendEmailChangeVerification(newEmail, token);
+
+        return new AccountResponseDTO(user.getUsername(), user.getEmail(), newEmail);
+    }
+
+    @Override
+    @Transactional
+    public AccountResponseDTO cancelEmailChange(Long userId) {
+        
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        pendingEmailChangeRepository.deleteByUser_Id(user.getId());
+
+        return new AccountResponseDTO(user.getUsername(), user.getEmail(), null);
+    }
+
+    @Override
+    public void handleEmailChangeVerification(String token) {
+        
+        PendingEmailChange pendingEmailChange = pendingEmailChangeRepository.findByToken(token);
+        if (pendingEmailChange == null) {
+            throw new RuntimeException("Invalid email change token");
+        }
+
+        if (pendingEmailChange.getExpiresAt().isBefore(LocalDateTime.now())) {
+            throw new RuntimeException("Email change token has expired");
+        }
+
+        User user = pendingEmailChange.getUser();
+        user.setEmail(pendingEmailChange.getNewEmail());
+        userRepository.save(user);
+
+        // Remove the pending email change after successful verification
+        pendingEmailChangeRepository.delete(pendingEmailChange);
+    }
+
+    
 }
