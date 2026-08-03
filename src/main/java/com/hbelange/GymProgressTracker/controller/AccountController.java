@@ -1,7 +1,7 @@
 package com.hbelange.GymProgressTracker.controller;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
+import com.hbelange.GymProgressTracker.security.SecurityUser;
 import com.hbelange.GymProgressTracker.service.UserService;
 
 import jakarta.validation.Valid;
@@ -32,33 +33,33 @@ public class AccountController {
 
     @GetMapping("/api/account")
     @ResponseBody
-    public ResponseEntity<AccountResponseDTO> getAccount(Authentication authentication) {
+    public ResponseEntity<AccountResponseDTO> getAccount(@AuthenticationPrincipal SecurityUser user) {
         // Implementation for retrieving account details
-        AccountResponseDTO account = userService.getAccount(Long.valueOf(authentication.getName()));
+        AccountResponseDTO account = userService.getAccount(user.getId());
         return ResponseEntity.ok(account);
     }
 
     @PutMapping("/api/account/username")
     @ResponseBody
-    public ResponseEntity<AccountResponseDTO> updateUsername(@Valid @RequestBody UsernameUpdateDTO usernameUpdateDTO, Authentication authentication) {
+    public ResponseEntity<AccountResponseDTO> updateUsername(@Valid @RequestBody UsernameUpdateDTO usernameUpdateDTO, @AuthenticationPrincipal SecurityUser user) {
         // Implementation for updating username
-        AccountResponseDTO updatedAccount = userService.updateUsername(Long.valueOf(authentication.getName()), usernameUpdateDTO.newUsername());
+        AccountResponseDTO updatedAccount = userService.updateUsername(user.getId(), usernameUpdateDTO.newUsername());
         return ResponseEntity.ok(updatedAccount);
     }
 
     @PostMapping("/api/account/email")
     @ResponseBody
-    public ResponseEntity<AccountResponseDTO> changeEmail(@Valid @RequestBody EmailChangeRequestDTO emailChangeRequestDTO, Authentication authentication) {
+    public ResponseEntity<AccountResponseDTO> changeEmail(@Valid @RequestBody EmailChangeRequestDTO emailChangeRequestDTO, @AuthenticationPrincipal SecurityUser user) {
         // Implementation for changing email
-        AccountResponseDTO updatedAccount = userService.changeEmail(Long.valueOf(authentication.getName()), emailChangeRequestDTO.newEmail());
+        AccountResponseDTO updatedAccount = userService.changeEmail(user.getId(), emailChangeRequestDTO.newEmail());
         return ResponseEntity.ok(updatedAccount);
     }
 
     @DeleteMapping("/api/account/email")
     @ResponseBody
-    public ResponseEntity<AccountResponseDTO> cancelEmailChange(Authentication authentication) {
+    public ResponseEntity<AccountResponseDTO> cancelEmailChange(@AuthenticationPrincipal SecurityUser user) {
         // Implementation for canceling email change
-        AccountResponseDTO updatedAccount = userService.cancelEmailChange(Long.valueOf(authentication.getName()));
+        AccountResponseDTO updatedAccount = userService.cancelEmailChange(user.getId());
         return ResponseEntity.ok(updatedAccount);
     }
     
