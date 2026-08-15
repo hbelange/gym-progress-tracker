@@ -35,5 +35,9 @@ build/
 ### Superpowers ###
 .superpowers/
 
-# SSL keystore
-src/main/resources/certificate.p12
+# Secrets / credentials
+*.p12
+*.pem
+*.key
+*.jks
+.env
