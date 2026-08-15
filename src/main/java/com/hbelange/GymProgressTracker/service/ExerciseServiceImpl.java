@@ -26,9 +26,9 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
-    public ExerciseResponseDTO createExercise(ExerciseRequestDTO exerciseRequestDTO, String username) {
-        User owner = userRepository.findByUsername(username)
-            .orElseThrow(() -> new EntityNotFoundException("User not found: " + username));
+    public ExerciseResponseDTO createExercise(ExerciseRequestDTO exerciseRequestDTO, Long userId) {
+        User owner = userRepository.findById(userId)
+            .orElseThrow(() -> new EntityNotFoundException("User not found: " + userId));
         Exercise exercise = new Exercise();
         exercise.setName(exerciseRequestDTO.name());
         exercise.setUser(owner);
@@ -37,8 +37,8 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
 
     @Override
-    public List<ExerciseResponseDTO> getAllExercises(String username) {
-        List<Exercise> exercises = exerciseRepository.findAllByUser_Username(username);
+    public List<ExerciseResponseDTO> getAllExercises(Long userId) {
+        List<Exercise> exercises = exerciseRepository.findAllByUser_Id(userId);
         List<ExerciseResponseDTO> exerciseResponseDTOs = exercises.stream()
                 .map(exercise -> new ExerciseResponseDTO(exercise.getId(), exercise.getName()))
                 .toList();
@@ -46,13 +46,13 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
     
     @Override
-    @PreAuthorize("@exerciseRepository.existsByIdAndUser_Username(#exerciseId, authentication.name)")
+    @PreAuthorize("@exerciseRepository.existsByIdAndUser_Id(#exerciseId, authentication.name)")
     public void deleteExercise(Long exerciseId) {
         exerciseRepository.deleteById(exerciseId);
     }
 
     @Override
-    @PreAuthorize("@exerciseRepository.existsByIdAndUser_Username(#exerciseId, authentication.name)")
+    @PreAuthorize("@exerciseRepository.existsByIdAndUser_Id(#exerciseId, authentication.name)")
     public ExerciseResponseDTO updateExercise(Long exerciseId, ExerciseRequestDTO exerciseRequestDTO) {
         Exercise exercise = exerciseRepository.findById(exerciseId)
             .orElseThrow(() -> new EntityNotFoundException("Exercise not found with id: " + exerciseId));

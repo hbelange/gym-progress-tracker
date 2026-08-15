@@ -3,7 +3,7 @@ package com.hbelange.GymProgressTracker.controller;
 import java.util.List;
 
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 
 import com.hbelange.GymProgressTracker.dto.ExerciseRequestDTO;
 import com.hbelange.GymProgressTracker.dto.ExerciseResponseDTO;
+import com.hbelange.GymProgressTracker.security.SecurityUser;
 import com.hbelange.GymProgressTracker.service.ExerciseService;
 
 import org.springframework.http.HttpStatus;
@@ -38,15 +39,15 @@ public class ExerciseController {
 
     @PostMapping("/api/exercise")
     @ResponseBody
-    public ResponseEntity<ExerciseResponseDTO> createExercise(@Valid @RequestBody ExerciseRequestDTO exerciseRequestDTO, Authentication authentication) {
-        ExerciseResponseDTO exercise = exerciseService.createExercise(exerciseRequestDTO, authentication.getName());
+    public ResponseEntity<ExerciseResponseDTO> createExercise(@Valid @RequestBody ExerciseRequestDTO exerciseRequestDTO, @AuthenticationPrincipal SecurityUser user) {
+        ExerciseResponseDTO exercise = exerciseService.createExercise(exerciseRequestDTO, user.getId());
         return ResponseEntity.ok(exercise);
     }
 
     @GetMapping("/api/exercise")
     @ResponseBody
-    public ResponseEntity<List<ExerciseResponseDTO>> getAllExercises(Authentication authentication) {
-        List<ExerciseResponseDTO> exercises = exerciseService.getAllExercises(authentication.getName());
+    public ResponseEntity<List<ExerciseResponseDTO>> getAllExercises(@AuthenticationPrincipal SecurityUser user) {
+        List<ExerciseResponseDTO> exercises = exerciseService.getAllExercises(user.getId());
         return ResponseEntity.ok(exercises);
     }
 

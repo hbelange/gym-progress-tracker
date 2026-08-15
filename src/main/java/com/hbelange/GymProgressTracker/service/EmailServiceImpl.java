@@ -74,4 +74,16 @@ public class EmailServiceImpl implements EmailService {
         mailSender.send(message);
     }
 
+    @Override
+    @Async
+    public void sendEmailChangeVerification(String newEmail, String token) {
+        String changeLink = baseUrl + "/change-email?token=" + URLEncoder.encode(token, StandardCharsets.UTF_8);
+        String body = "Click the following link to change your email: " + changeLink + "\n\nThis link will expire in 15 minutes.";
+        SimpleMailMessage message = new SimpleMailMessage();
+        message.setTo(newEmail);
+        message.setSubject("Change your email");
+        message.setText(body);
+        mailSender.send(message);
+    }
+
 }

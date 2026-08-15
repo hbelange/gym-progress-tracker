@@ -39,20 +39,20 @@ public class TrendServiceImpl implements TrendService {
     }
 
     @Override
-    public MeasurementTrendResponseDTO getMeasurementTrend(String username, MeasurementType type, TrendRange range) {
+    public MeasurementTrendResponseDTO getMeasurementTrend(Long userId, MeasurementType type, TrendRange range) {
 
         LocalDate today = LocalDate.now();
 
-        List<MeasurementTrendPointDTO> series = toPoints(measurementRepository.findAllByUser_UsernameAndTypeAndDateBetweenOrderByDateAsc(
-            username,
+        List<MeasurementTrendPointDTO> series = toPoints(measurementRepository.findAllByUser_IdAndTypeAndDateBetweenOrderByDateAsc(
+            userId,
             type,
             today.minusDays(range.getDays() - 1),
             today
         ));
 
         // Weekly averages always cover the last 4 rolling weeks, independent of the selected range.
-        List<MeasurementTrendPointDTO> lastFourWeeks = toPoints(measurementRepository.findAllByUser_UsernameAndTypeAndDateBetweenOrderByDateAsc(
-            username,
+        List<MeasurementTrendPointDTO> lastFourWeeks = toPoints(measurementRepository.findAllByUser_IdAndTypeAndDateBetweenOrderByDateAsc(
+            userId,
             type,
             today.minusDays(27),
             today
@@ -90,13 +90,13 @@ public class TrendServiceImpl implements TrendService {
     }
 
     @Override
-    public ExerciseTrendResponseDTO getExerciseTrend(String username, Long id, TrendRange week) {
+    public ExerciseTrendResponseDTO getExerciseTrend(Long userId, Long id, TrendRange week) {
         
         LocalDate today = LocalDate.now();
 
         // Get estimated one rep max for every day - if more than one set for date, take the max one rep max for that day.
         Map<LocalDate, Double> dailyOneRepMax = new HashMap<>();
-        for (Set set : setRepository.findAllByUser_UsernameAndExercise_Id(username, id)) {
+        for (Set set : setRepository.findAllByUser_IdAndExercise_Id(userId, id)) {
             double oneRepMax = set.getWeight() * (1 + (set.getReps() / 30.0));
             dailyOneRepMax.merge(set.getWorkout().getDate(), oneRepMax, Double::max);
         }
@@ -116,11 +116,11 @@ public class TrendServiceImpl implements TrendService {
     }
 
     @Override
-    public List<ExerciseActivityDTO> getExercisesByRecentActivity(String username) {
+    public List<ExerciseActivityDTO> getExercisesByRecentActivity(Long userId) {
 
         List<ExerciseActivityDTO> exercises = new ArrayList<>();
         
-        setRepository.findAllByUser_Username(username).forEach(set -> {
+        setRepository.findAllByUser_Id(userId).forEach(set -> {
             exercises.add(new ExerciseActivityDTO(set.getExercise().getId(), set.getExercise().getName(), set.getWorkout().getDate()));
         });
 

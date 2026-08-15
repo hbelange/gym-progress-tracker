@@ -1,8 +1,9 @@
 package com.hbelange.GymProgressTracker.controller;
 
-import org.springframework.security.core.Authentication;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 
+import com.hbelange.GymProgressTracker.security.SecurityUser;
 import com.hbelange.GymProgressTracker.service.WorkoutTypeService;
 
 import jakarta.validation.Valid;
@@ -40,8 +41,8 @@ public class WorkoutTypeController {
 
     @GetMapping("/api/workoutType")
     @ResponseBody
-    public ResponseEntity<List<WorkoutTypeResponseDTO>> getAllWorkoutTypes(Authentication authentication) {
-        List<WorkoutTypeResponseDTO> workoutTypes = workoutTypeService.getAllWorkoutTypes(authentication.getName());
+    public ResponseEntity<List<WorkoutTypeResponseDTO>> getAllWorkoutTypes(@AuthenticationPrincipal SecurityUser user) {
+        List<WorkoutTypeResponseDTO> workoutTypes = workoutTypeService.getAllWorkoutTypes(user.getId());
         return ResponseEntity.ok(workoutTypes);
     }
 
@@ -61,8 +62,8 @@ public class WorkoutTypeController {
 
     @PostMapping("/api/workoutType")
     @ResponseBody
-    public ResponseEntity<WorkoutTypeResponseDTO> postMethodName(@Valid @RequestBody WorkoutTypeRequestDTO workoutTypeRequestDTO, Authentication authentication) {
-        WorkoutTypeResponseDTO createdWorkoutType = workoutTypeService.createWorkoutType(workoutTypeRequestDTO, authentication.getName());
+    public ResponseEntity<WorkoutTypeResponseDTO> postMethodName(@Valid @RequestBody WorkoutTypeRequestDTO workoutTypeRequestDTO, @AuthenticationPrincipal SecurityUser user) {
+        WorkoutTypeResponseDTO createdWorkoutType = workoutTypeService.createWorkoutType(workoutTypeRequestDTO, user.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(createdWorkoutType);
     }
     
