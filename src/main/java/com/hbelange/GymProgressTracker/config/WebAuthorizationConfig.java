@@ -13,6 +13,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.servlet.util.matcher.PathPatternRequestMatcher;
 
 @Configuration
@@ -30,7 +31,10 @@ public class WebAuthorizationConfig {
             .exceptionHandling(exceptions -> exceptions
                 .defaultAuthenticationEntryPointFor(
                     new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED),
-                    PathPatternRequestMatcher.withDefaults().matcher("/api/**")))
+                    PathPatternRequestMatcher.withDefaults().matcher("/api/**"))
+                .defaultAuthenticationEntryPointFor(
+                    new LoginUrlAuthenticationEntryPoint("/login"),
+                    PathPatternRequestMatcher.withDefaults().matcher("/**")))
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/error", "/register", "/register/pending", "/login", "/css/**", "/verify", "/resend-verification", "/forgot-password", "/reset-password").permitAll()
                 .requestMatchers(HttpMethod.POST, "/api/register").permitAll()

@@ -21,12 +21,12 @@ public class SetSecurity {
     }
 
     /** True if the given user owns both the workout and the exercise referenced by the set request. */
-    public boolean ownsWorkoutAndExercise(SetRequestDTO setRequestDTO, String userId) {
-        return workoutRepository.existsByIdAndUser_Id(setRequestDTO.workoutId(), Long.valueOf(userId))
-                && exerciseRepository.existsByIdAndUser_Id(setRequestDTO.exerciseId(), Long.valueOf(userId));
+    public boolean ownsWorkoutAndExercise(SetRequestDTO setRequestDTO, Long userId) {
+        return workoutRepository.existsByIdAndUser_Id(setRequestDTO.workoutId(), userId)
+                && exerciseRepository.existsByIdAndUser_Id(setRequestDTO.exerciseId(), userId);
     }
 
-    public boolean ownsSet(Long setId, String userId) {
-        return setRepository.existsByIdAndUser_Id(setId, Long.valueOf(userId));
+    public boolean ownsSet(Long setId, Long userId) {
+        return setRepository.existsByIdAndUser_Id(setId, userId);
     }
 }

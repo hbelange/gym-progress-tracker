@@ -2,15 +2,20 @@ package com.hbelange.GymProgressTracker.service;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Import;
-import org.springframework.security.test.context.support.WithMockUser;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.core.context.SecurityContextHolder;
 
 import com.hbelange.GymProgressTracker.TestcontainersConfiguration;
 import com.hbelange.GymProgressTracker.dto.ExerciseActivityDTO;
@@ -27,8 +32,9 @@ import com.hbelange.GymProgressTracker.dto.WorkoutResponseDTO;
 import com.hbelange.GymProgressTracker.dto.WorkoutTypeRequestDTO;
 import com.hbelange.GymProgressTracker.dto.WorkoutTypeResponseDTO;
 import com.hbelange.GymProgressTracker.entity.MeasurementType;
-
-import lombok.With;
+import com.hbelange.GymProgressTracker.entity.User;
+import com.hbelange.GymProgressTracker.repository.UserRepository;
+import com.hbelange.GymProgressTracker.security.SecurityUser;
 
 @SpringBootTest
 @Import(TestcontainersConfiguration.class)
@@ -49,55 +55,79 @@ public class TrendServiceTest {
     @Autowired
     private WorkoutTypeService workoutTypeService;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    private Long userId;
+
+    @BeforeEach
+    void authenticateAsFreshUser() {
+        String username = "trend-service-test-" + UUID.randomUUID();
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(username + "@example.com");
+        user.setPassword("password");
+        user.setEnabled(1);
+        user.setAuthorities(List.of());
+        user = userRepository.save(user);
+        userId = user.getId();
+
+        SecurityUser securityUser = new SecurityUser(user);
+        SecurityContext context = SecurityContextHolder.createEmptyContext();
+        context.setAuthentication(new UsernamePasswordAuthenticationToken(securityUser, null, securityUser.getAuthorities()));
+        SecurityContextHolder.setContext(context);
+    }
+
+    @AfterEach
+    void clearSecurityContext() {
+        SecurityContextHolder.clearContext();
+    }
+
     @Test
-    @WithMockUser(username = "harrison")
     void testMeasurementTrendSeriesOnlyIncludesRequestedType() {
         LocalDate today = LocalDate.now();
-        measurementService.createMeasurement(new MeasurementRequestDTO(today, MeasurementType.WEIGHT, 181.5), "harrison");
-        measurementService.createMeasurement(new MeasurementRequestDTO(today, MeasurementType.STEPS, 9000.0), "harrison");
+        measurementService.createMeasurement(new MeasurementRequestDTO(today, MeasurementType.WEIGHT, 181.5), userId);
+        measurementService.createMeasurement(new MeasurementRequestDTO(today, MeasurementType.STEPS, 9000.0), userId);
 
-        MeasurementTrendResponseDTO trend = trendService.getMeasurementTrend("harrison", MeasurementType.WEIGHT, TrendRange.WEEK);
+        MeasurementTrendResponseDTO trend = trendService.getMeasurementTrend(userId, MeasurementType.WEIGHT, TrendRange.WEEK);
 
         assertTrue(trend.series().stream().anyMatch(point -> point.date().equals(today) && point.value().equals(181.5)));
         assertTrue(trend.series().stream().noneMatch(point -> point.value().equals(9000.0)));
     }
 
     @Test
-    @WithMockUser(username = "harrison")
     void testMeasurementTrendSeriesRangeBoundaryIsExactlySevenDays() {
         LocalDate today = LocalDate.now();
-        measurementService.createMeasurement(new MeasurementRequestDTO(today.minusDays(6), MeasurementType.WEIGHT, 200.1), "harrison");
-        measurementService.createMeasurement(new MeasurementRequestDTO(today.minusDays(7), MeasurementType.WEIGHT, 300.1), "harrison");
+        measurementService.createMeasurement(new MeasurementRequestDTO(today.minusDays(6), MeasurementType.WEIGHT, 200.1), userId);
+        measurementService.createMeasurement(new MeasurementRequestDTO(today.minusDays(7), MeasurementType.WEIGHT, 300.1), userId);
 
-        MeasurementTrendResponseDTO trend = trendService.getMeasurementTrend("harrison", MeasurementType.WEIGHT, TrendRange.WEEK);
+        MeasurementTrendResponseDTO trend = trendService.getMeasurementTrend(userId, MeasurementType.WEIGHT, TrendRange.WEEK);
 
         assertTrue(trend.series().stream().anyMatch(point -> point.value().equals(200.1)));
         assertTrue(trend.series().stream().noneMatch(point -> point.value().equals(300.1)));
     }
 
     @Test
-    @WithMockUser(username = "harrison")
     void testWeeklyAveragesIncludePointsOutsideSelectedRange() {
         LocalDate today = LocalDate.now();
-        measurementService.createMeasurement(new MeasurementRequestDTO(today.minusDays(15), MeasurementType.STEPS, 7777.0), "harrison");
+        measurementService.createMeasurement(new MeasurementRequestDTO(today.minusDays(15), MeasurementType.STEPS, 7777.0), userId);
 
-        MeasurementTrendResponseDTO trend = trendService.getMeasurementTrend("harrison", MeasurementType.STEPS, TrendRange.WEEK);
+        MeasurementTrendResponseDTO trend = trendService.getMeasurementTrend(userId, MeasurementType.STEPS, TrendRange.WEEK);
 
         assertTrue(trend.series().stream().noneMatch(point -> point.value().equals(7777.0)));
         assertTrue(trend.weeklyAverages().stream().anyMatch(w -> w.average().equals(7777.0)));
     }
 
     @Test
-    @WithMockUser(username = "harrison")
     void testWeeklyAveragesOmitEmptyBuckets() {
         LocalDate today = LocalDate.now();
         LocalDate currentWeekStart = today.minusDays(6);
         LocalDate twoWeeksAgoStart = today.minusDays(20);
 
-        measurementService.createMeasurement(new MeasurementRequestDTO(today, MeasurementType.CALORIES, 2500.5), "harrison");
-        measurementService.createMeasurement(new MeasurementRequestDTO(today.minusDays(15), MeasurementType.CALORIES, 1800.5), "harrison");
+        measurementService.createMeasurement(new MeasurementRequestDTO(today, MeasurementType.CALORIES, 2500.5), userId);
+        measurementService.createMeasurement(new MeasurementRequestDTO(today.minusDays(15), MeasurementType.CALORIES, 1800.5), userId);
 
-        MeasurementTrendResponseDTO trend = trendService.getMeasurementTrend("harrison", MeasurementType.CALORIES, TrendRange.WEEK);
+        MeasurementTrendResponseDTO trend = trendService.getMeasurementTrend(userId, MeasurementType.CALORIES, TrendRange.WEEK);
 
         List<WeeklyAverageDTO> weeklyAverages = trend.weeklyAverages();
         assertTrue(weeklyAverages.stream().anyMatch(w -> w.weekStart().equals(currentWeekStart) && w.average().equals(2500.5)));
@@ -107,16 +137,15 @@ public class TrendServiceTest {
     }
 
     @Test
-    @WithMockUser(username = "harrison")
     void testExerciseTrendUsesBestE1rmPerDay() {
-        WorkoutTypeResponseDTO type = workoutTypeService.createWorkoutType(new WorkoutTypeRequestDTO("Push Day Trend Test"), "harrison");
-        WorkoutResponseDTO workout = workoutService.createWorkout(new WorkoutRequestDTO(LocalDate.now(), type.id()), "harrison");
-        ExerciseResponseDTO benchPress = exerciseService.createExercise(new ExerciseRequestDTO("Bench Press Trend Test"), "harrison");
+        WorkoutTypeResponseDTO type = workoutTypeService.createWorkoutType(new WorkoutTypeRequestDTO("Push Day Trend Test"), userId);
+        WorkoutResponseDTO workout = workoutService.createWorkout(new WorkoutRequestDTO(LocalDate.now(), type.id()), userId);
+        ExerciseResponseDTO benchPress = exerciseService.createExercise(new ExerciseRequestDTO("Bench Press Trend Test"), userId);
 
         workoutService.addSetToWorkout(new SetRequestDTO(workout.id(), benchPress.id(), 5, 2, 200.0));
         workoutService.addSetToWorkout(new SetRequestDTO(workout.id(), benchPress.id(), 8, 1, 185.0));
 
-        ExerciseTrendResponseDTO trend = trendService.getExerciseTrend("harrison", benchPress.id(), TrendRange.WEEK);
+        ExerciseTrendResponseDTO trend = trendService.getExerciseTrend(userId, benchPress.id(), TrendRange.WEEK);
 
         double e1rmA = 200.0 * (1 + 5 / 30.0);
         double e1rmB = 185.0 * (1 + 8 / 30.0);
@@ -128,36 +157,34 @@ public class TrendServiceTest {
     }
 
     @Test
-    @WithMockUser(username = "harrison")
     void testExerciseTrendHasOnePointPerDay() {
-        WorkoutTypeResponseDTO type = workoutTypeService.createWorkoutType(new WorkoutTypeRequestDTO("Push Day Trend Test 2"), "harrison");
-        ExerciseResponseDTO squat = exerciseService.createExercise(new ExerciseRequestDTO("Squat Trend Test"), "harrison");
+        WorkoutTypeResponseDTO type = workoutTypeService.createWorkoutType(new WorkoutTypeRequestDTO("Push Day Trend Test 2"), userId);
+        ExerciseResponseDTO squat = exerciseService.createExercise(new ExerciseRequestDTO("Squat Trend Test"), userId);
 
-        WorkoutResponseDTO todayWorkout = workoutService.createWorkout(new WorkoutRequestDTO(LocalDate.now(), type.id()), "harrison");
+        WorkoutResponseDTO todayWorkout = workoutService.createWorkout(new WorkoutRequestDTO(LocalDate.now(), type.id()), userId);
         workoutService.addSetToWorkout(new SetRequestDTO(todayWorkout.id(), squat.id(), 5, 2, 225.0));
 
-        WorkoutResponseDTO yesterdayWorkout = workoutService.createWorkout(new WorkoutRequestDTO(LocalDate.now().minusDays(1), type.id()), "harrison");
+        WorkoutResponseDTO yesterdayWorkout = workoutService.createWorkout(new WorkoutRequestDTO(LocalDate.now().minusDays(1), type.id()), userId);
         workoutService.addSetToWorkout(new SetRequestDTO(yesterdayWorkout.id(), squat.id(), 5, 2, 215.0));
 
-        ExerciseTrendResponseDTO trend = trendService.getExerciseTrend("harrison", squat.id(), TrendRange.WEEK);
+        ExerciseTrendResponseDTO trend = trendService.getExerciseTrend(userId, squat.id(), TrendRange.WEEK);
 
         assertEquals(2, trend.series().size());
     }
 
     @Test
-    @WithMockUser(username = "testuser")
     void testExercisesOrderedByMostRecentFirst() {
-        WorkoutTypeResponseDTO type = workoutTypeService.createWorkoutType(new WorkoutTypeRequestDTO("Leg Day Recent Activity Test"), "testuser");
-        ExerciseResponseDTO squat = exerciseService.createExercise(new ExerciseRequestDTO("Squat Recent Activity Test"), "testuser");
-        ExerciseResponseDTO legCurl = exerciseService.createExercise(new ExerciseRequestDTO("Leg Curl Recent Activity Test"), "testuser");
+        WorkoutTypeResponseDTO type = workoutTypeService.createWorkoutType(new WorkoutTypeRequestDTO("Leg Day Recent Activity Test"), userId);
+        ExerciseResponseDTO squat = exerciseService.createExercise(new ExerciseRequestDTO("Squat Recent Activity Test"), userId);
+        ExerciseResponseDTO legCurl = exerciseService.createExercise(new ExerciseRequestDTO("Leg Curl Recent Activity Test"), userId);
 
-        WorkoutResponseDTO oldWorkout = workoutService.createWorkout(new WorkoutRequestDTO(LocalDate.now().minusDays(5), type.id()), "testuser");
+        WorkoutResponseDTO oldWorkout = workoutService.createWorkout(new WorkoutRequestDTO(LocalDate.now().minusDays(5), type.id()), userId);
         workoutService.addSetToWorkout(new SetRequestDTO(oldWorkout.id(), squat.id(), 5, 2, 225.0));
 
-        WorkoutResponseDTO recentWorkout = workoutService.createWorkout(new WorkoutRequestDTO(LocalDate.now(), type.id()), "testuser");
+        WorkoutResponseDTO recentWorkout = workoutService.createWorkout(new WorkoutRequestDTO(LocalDate.now(), type.id()), userId);
         workoutService.addSetToWorkout(new SetRequestDTO(recentWorkout.id(), legCurl.id(), 12, 2, 60.0));
 
-        List<ExerciseActivityDTO> exercises = trendService.getExercisesByRecentActivity("testuser");
+        List<ExerciseActivityDTO> exercises = trendService.getExercisesByRecentActivity(userId);
 
         int legCurlIndex = indexOfExercise(exercises, legCurl.id());
         int squatIndex = indexOfExercise(exercises, squat.id());
@@ -165,11 +192,10 @@ public class TrendServiceTest {
     }
 
     @Test
-    @WithMockUser(username = "testuser")
     void testExercisesWithoutSetsAreExcluded() {
-        ExerciseResponseDTO neverLogged = exerciseService.createExercise(new ExerciseRequestDTO("Never Logged Exercise Test"), "testuser");
+        ExerciseResponseDTO neverLogged = exerciseService.createExercise(new ExerciseRequestDTO("Never Logged Exercise Test"), userId);
 
-        List<ExerciseActivityDTO> exercises = trendService.getExercisesByRecentActivity("testuser");
+        List<ExerciseActivityDTO> exercises = trendService.getExercisesByRecentActivity(userId);
 
         assertTrue(exercises.stream().noneMatch(e -> e.exerciseId().equals(neverLogged.id())));
     }
