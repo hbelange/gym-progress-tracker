@@ -26,4 +26,6 @@ public interface SetRepository extends JpaRepository<Set, Long> {
     List<Set> findAllByUser_Id(Long userId);
 
     boolean existsByIdAndUser_Id(Long setId, Long valueOf);
+
+    void deleteAllByUser_Id(Long userId);
 }

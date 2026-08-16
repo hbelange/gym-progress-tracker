@@ -18,7 +18,9 @@ import com.hbelange.GymProgressTracker.TestcontainersConfiguration;
 import com.hbelange.GymProgressTracker.dto.UserRequestDTO;
 import com.hbelange.GymProgressTracker.dto.UserResponseDTO;
 import com.hbelange.GymProgressTracker.entity.User;
+import com.hbelange.GymProgressTracker.exception.DemoAccountRestrictedException;
 import com.hbelange.GymProgressTracker.exception.UserAlreadyExistsException;
+import com.hbelange.GymProgressTracker.repository.PasswordResetTokenRepository;
 import com.hbelange.GymProgressTracker.repository.UserRepository;
 
 @SpringBootTest
@@ -31,6 +33,12 @@ public class UserServiceTest {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private DemoAccountService demoAccountService;
+
+    @Autowired
+    private PasswordResetTokenRepository passwordResetTokenRepository;
+
     private String username;
     private String email;
 
@@ -38,6 +46,19 @@ public class UserServiceTest {
     void setUp() {
         username = "reg-" + UUID.randomUUID();
         email = username + "@example.com";
+    }
+
+    private User findOrCreateDemoUser() {
+        return userRepository.findByUsername(demoAccountService.getDemoUsername())
+                .orElseGet(() -> {
+                    User demoUser = new User();
+                    demoUser.setUsername(demoAccountService.getDemoUsername());
+                    demoUser.setEmail(demoAccountService.getDemoUsername() + "@example.com");
+                    demoUser.setPassword("password");
+                    demoUser.setEnabled(1);
+                    demoUser.setAuthorities(java.util.List.of());
+                    return userRepository.save(demoUser);
+                });
     }
 
     @Test
@@ -73,6 +94,34 @@ public class UserServiceTest {
         assertThrows(UserAlreadyExistsException.class, () -> {
             userService.registerUser(new UserRequestDTO("different-" + email, username, "differentPassword"));
         });
+    }
+
+    @Test
+    void testUpdateUsernameOnDemoAccountThrows() {
+        User demoUser = findOrCreateDemoUser();
+
+        assertThrows(DemoAccountRestrictedException.class, () -> {
+            userService.updateUsername(demoUser.getId(), "hacker-" + UUID.randomUUID());
+        });
+    }
+
+    @Test
+    void testChangeEmailOnDemoAccountThrows() {
+        User demoUser = findOrCreateDemoUser();
+
+        assertThrows(DemoAccountRestrictedException.class, () -> {
+            userService.changeEmail(demoUser.getId(), "hacker-" + UUID.randomUUID() + "@example.com");
+        });
+    }
+
+    @Test
+    void testHandlePasswordResetForDemoAccountDoesNotCreateToken() {
+        User demoUser = findOrCreateDemoUser();
+        long tokensBefore = passwordResetTokenRepository.count();
+
+        userService.handlePasswordReset(demoUser.getEmail());
+
+        assertEquals(tokensBefore, passwordResetTokenRepository.count());
     }
 
 }

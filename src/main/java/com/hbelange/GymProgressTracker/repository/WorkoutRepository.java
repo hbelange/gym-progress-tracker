@@ -18,4 +18,6 @@ public interface WorkoutRepository extends JpaRepository<Workout, Long> {
 
     boolean existsByIdAndUser_Id(Long workoutId, Long userId);
 
+    void deleteAllByUser_Id(Long userId);
+
 }

@@ -36,5 +36,11 @@
 
     <p><a th:href="@{/forgot-password}">Forgot password?</a></p>
     <p>Don't have an account? <a th:href="@{/register}">Register</a></p>
+
+    <p class="message message-info">
+        Just looking around? Log in with
+        <strong th:text="${demoUsername}">demo</strong> /
+        <strong th:text="${demoPassword}">demo</strong> &mdash; no signup needed.
+    </p>
 </body>
 </html>

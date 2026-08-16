@@ -27,6 +27,7 @@ import com.hbelange.GymProgressTracker.entity.Authority;
 import com.hbelange.GymProgressTracker.entity.PasswordResetToken;
 import com.hbelange.GymProgressTracker.entity.PendingEmailChange;
 import com.hbelange.GymProgressTracker.entity.User;
+import com.hbelange.GymProgressTracker.exception.DemoAccountRestrictedException;
 import com.hbelange.GymProgressTracker.exception.UserAlreadyExistsException;
 import com.hbelange.GymProgressTracker.repository.PasswordResetTokenRepository;
 import com.hbelange.GymProgressTracker.repository.PendingEmailChangeRepository;
@@ -47,6 +48,7 @@ public class UserServiceImpl implements UserService {
     private final EmailService emailService;
     private final PasswordResetTokenRepository tokenRepository;
     private final PendingEmailChangeRepository pendingEmailChangeRepository;
+    private final DemoAccountService demoAccountService;
 
     @Value("${jwt.secret}")
     private String secretKey;
@@ -54,12 +56,13 @@ public class UserServiceImpl implements UserService {
     private static final SecureRandom secureRandom = new SecureRandom();
     private static final Base64.Encoder base64Encoder = Base64.getUrlEncoder().withoutPadding();
 
-    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, EmailService emailService, PasswordResetTokenRepository tokenRepository, PendingEmailChangeRepository pendingEmailChangeRepository) {
+    public UserServiceImpl(UserRepository userRepository, PasswordEncoder passwordEncoder, EmailService emailService, PasswordResetTokenRepository tokenRepository, PendingEmailChangeRepository pendingEmailChangeRepository, DemoAccountService demoAccountService) {
         this.userRepository = userRepository;
         this.passwordEncoder = passwordEncoder;
         this.emailService = emailService;
         this.tokenRepository = tokenRepository;
         this.pendingEmailChangeRepository = pendingEmailChangeRepository;
+        this.demoAccountService = demoAccountService;
     }
 
     private String generateRandomToken() {
@@ -150,6 +153,10 @@ public class UserServiceImpl implements UserService {
         }
 
         User user = userOpt.get();
+        if (demoAccountService.isDemoAccount(user.getUsername())) {
+            return; // Never let the shared demo account's password be reset
+        }
+
         String token = generateRandomToken();
 
         PasswordResetToken passwordResetToken = new PasswordResetToken();
@@ -199,6 +206,10 @@ public class UserServiceImpl implements UserService {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
 
+        if (demoAccountService.isDemoAccount(user.getUsername())) {
+            throw new DemoAccountRestrictedException("This is a shared demo account and can't be modified.");
+        }
+
         if (userRepository.findByUsername(newUsername).isPresent()) {
             throw new RuntimeException("Username already exists");
         }
@@ -217,6 +228,10 @@ public class UserServiceImpl implements UserService {
         
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new RuntimeException("User not found"));
+
+        if (demoAccountService.isDemoAccount(user.getUsername())) {
+            throw new DemoAccountRestrictedException("This is a shared demo account and can't be modified.");
+        }
 
         // Check if the new email is already in use
         if (userRepository.findByEmail(newEmail).isPresent()) {

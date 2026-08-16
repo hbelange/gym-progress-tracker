@@ -20,6 +20,8 @@
         <p class="dashboard-lede">Log the work. Watch the trend.</p>
     </header>
 
+    <p class="message message-info" th:if="${isDemo}">Demo account &mdash; data resets hourly.</p>
+
     <nav class="dashboard-grid">
         <a href="/workout">
             <span class="label">Workouts</span>
