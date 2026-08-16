@@ -1,9 +1,11 @@
 package com.hbelange.GymProgressTracker.controller;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestBuilders.formLogin;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.csrf;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.authenticated;
 import static org.springframework.security.test.web.servlet.response.SecurityMockMvcResultMatchers.unauthenticated;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.redirectedUrl;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -15,6 +17,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.context.annotation.Import;
+import org.springframework.mock.web.MockHttpSession;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.hbelange.GymProgressTracker.TestcontainersConfiguration;
@@ -86,6 +89,41 @@ public class LoginTest {
                 .andExpect(unauthenticated())
                 .andExpect(status().is3xxRedirection())
                 .andExpect(redirectedUrl("/login?error"));
+    }
+
+    @Test
+    void iconProbeDuringLoginDoesNotHijackPostLoginRedirect() throws Exception {
+        // Browsers auto-request /apple-touch-icon.png as a subresource probe on every page
+        // load. It isn't permitAll'd, so it 302s to /login and gets cached as the "saved
+        // request" in the session, same as the actual page the user meant to visit.
+        MockHttpSession session = new MockHttpSession();
+
+        mockMvc.perform(get("/apple-touch-icon.png").session(session))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
+
+        mockMvc.perform(post("/login").session(session).with(csrf())
+                        .param("username", username)
+                        .param("password", PASSWORD))
+                .andExpect(authenticated().withUsername(username))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/"));
+    }
+
+    @Test
+    void navigationToProtectedPageIsRestoredAfterLogin() throws Exception {
+        MockHttpSession session = new MockHttpSession();
+
+        mockMvc.perform(get("/account").session(session).header("Sec-Fetch-Mode", "navigate"))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("/login"));
+
+        mockMvc.perform(post("/login").session(session).with(csrf())
+                        .param("username", username)
+                        .param("password", PASSWORD))
+                .andExpect(authenticated().withUsername(username))
+                .andExpect(status().is3xxRedirection())
+                .andExpect(redirectedUrl("http://localhost/account?continue"));
     }
 
     @Test
