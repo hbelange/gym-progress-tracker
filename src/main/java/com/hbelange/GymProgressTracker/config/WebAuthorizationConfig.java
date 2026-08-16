@@ -46,11 +46,13 @@ public class WebAuthorizationConfig {
     }
 
     private RequestCache navigationOnlyRequestCache() {
-        // Browsers auto-request subresources like /apple-touch-icon.png or /favicon.ico on
-        // every page load. Left unfiltered, an unauthenticated probe for one of those can be
-        // cached as the "saved request" and clobber the page the user actually meant to visit,
-        // so the post-login redirect sends them to an icon URL instead. Only top-level page
-        // navigations (Sec-Fetch-Mode: navigate) are eligible to be saved and replayed.
+        /*
+         * Browsers auto-request subresources like /apple-touch-icon.png or /favicon.ico on
+         * every page load. Left unfiltered, an unauthenticated probe for one of those can be
+         * cached as the "saved request" and clobber the page the user actually meant to visit,
+         * so the post-login redirect sends them to an icon URL instead. Only top-level page
+         * navigations (Sec-Fetch-Mode: navigate) are eligible to be saved and replayed.
+        */
         HttpSessionRequestCache requestCache = new HttpSessionRequestCache();
         requestCache.setRequestMatcher(request -> "navigate".equals(request.getHeader("Sec-Fetch-Mode")));
         return requestCache;
