@@ -68,15 +68,15 @@ rm certificate-new.p12   # delete the local copy
 
 ## Database (RDS, not docker-compose)
 
-Production connects to AWS RDS — `docker-compose.yml` in this repo is local-dev only. Instance: `gym-progress-tracker-database-1`, endpoint in `DB_URL`, master user `gym_admin`.
+Production connects to AWS RDS — `docker-compose.yml` in this repo is local-dev only. Instance: `<rds-instance-id>`, endpoint in `DB_URL`, master user `<rds-master-user>`.
 
 ```bash
-aws rds describe-db-instances --profile iamadmin-general \
+aws rds describe-db-instances --profile <aws-profile> \
   --query "DBInstances[].{Id:DBInstanceIdentifier,Endpoint:Endpoint.Address,Status:DBInstanceStatus}" --output table
 
 # Rotate the master password (update DB_PASSWORD in the env file + restart afterward):
-aws rds modify-db-instance --profile iamadmin-general \
-  --db-instance-identifier gym-progress-tracker-database-1 \
+aws rds modify-db-instance --profile <aws-profile> \
+  --db-instance-identifier <rds-instance-id> \
   --master-user-password '<new-password>' --apply-immediately
 ```
 

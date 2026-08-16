@@ -8,8 +8,8 @@ Set via `/etc/gym-progress-tracker.env` on the instance (root-owned, mode `600`)
 
 | Variable | Purpose | Notes |
 |---|---|---|
-| `DB_URL` | Full JDBC URL for the database | Defaults to the local docker-compose Postgres. In prod this is the RDS endpoint, e.g. `jdbc:postgresql://gym-progress-tracker-database-1.cqzemqkaid44.us-east-1.rds.amazonaws.com:5432/gym_tracker` |
-| `DB_USERNAME` | Postgres username | Defaults to `gym_user` if unset. This deployment's RDS instance has no such role — prod connects as the RDS master user, `gym_admin` |
+| `DB_URL` | Full JDBC URL for the database | Defaults to the local docker-compose Postgres. In prod this is the RDS endpoint, e.g. `jdbc:postgresql://<rds-endpoint>:5432/gym_tracker` |
+| `DB_USERNAME` | Postgres username | Defaults to `gym_user` if unset. This deployment's RDS instance has no such role — prod connects as the RDS master user, `<rds-master-user>` |
 | `DB_PASSWORD` | Postgres password | No safe default in prod — set explicitly |
 | `SSL_KEYSTORE_PATH` | Path to the HTTPS keystore | `file:/etc/gym-progress-tracker/certificate.p12` |
 | `SSL_KEYSTORE_PASSWORD` | Keystore password | Required — app fails to start without it |
@@ -36,7 +36,7 @@ ssh -i <your-key.pem> ec2-user@<your-ec2-host> '
 # 2. Create the env file (fill in real values)
 ssh -i <your-key.pem> ec2-user@<your-ec2-host> 'sudo tee /etc/gym-progress-tracker.env > /dev/null' <<'EOF'
 DB_URL=jdbc:postgresql://<rds-endpoint>:5432/gym_tracker
-DB_USERNAME=gym_admin
+DB_USERNAME=<rds-master-user>
 DB_PASSWORD=<value>
 SSL_KEYSTORE_PATH=file:/etc/gym-progress-tracker/certificate.p12
 SSL_KEYSTORE_PASSWORD=<value>
@@ -61,7 +61,7 @@ ssh -i <your-key.pem> ec2-user@<your-ec2-host> 'systemctl cat gym-progress-track
 ssh -i <your-key.pem> ec2-user@<your-ec2-host> 'sudo systemctl daemon-reload && sudo systemctl restart gym-progress-tracker'
 ```
 
-This deployment's Postgres is AWS RDS (`gym-progress-tracker-database-1`), not a local docker-compose container — `docker-compose.yml` in this repo is for local development only. Rotate the RDS master password with `aws rds modify-db-instance --db-instance-identifier gym-progress-tracker-database-1 --master-user-password <new> --apply-immediately`.
+This deployment's Postgres is AWS RDS (`<rds-instance-id>`), not a local docker-compose container — `docker-compose.yml` in this repo is for local development only. Rotate the RDS master password with `aws rds modify-db-instance --db-instance-identifier <rds-instance-id> --master-user-password <new> --apply-immediately`.
 
 ## Local development
 
