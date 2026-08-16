@@ -41,5 +41,10 @@ public class SecurityUser implements UserDetails {
     public Long getId() {
         return user.getId();
     }
-    
+
+    @Override
+    public boolean isEnabled() {
+        return user.getEnabled() == 1;
+    }
+
 }

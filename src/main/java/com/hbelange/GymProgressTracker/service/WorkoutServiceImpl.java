@@ -64,7 +64,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     }
 
     @Override
-    @PreAuthorize("@workoutRepository.existsByIdAndUser_Id(#id, authentication.name)")
+    @PreAuthorize("@workoutRepository.existsByIdAndUser_Id(#id, authentication.principal.id)")
     public WorkoutResponseDTO getWorkoutById(Long id) {
         Workout workout = workoutRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Workout not found with id: " + id));
@@ -72,7 +72,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     }
 
     @Override
-    @PreAuthorize("@workoutRepository.existsByIdAndUser_Id(#id, authentication.name)")
+    @PreAuthorize("@workoutRepository.existsByIdAndUser_Id(#id, authentication.principal.id)")
     public WorkoutResponseDTO updateWorkout(Long id, WorkoutRequestDTO workoutRequestDTO) {
         Workout workout = workoutRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Workout not found with id: " + id));
@@ -87,13 +87,13 @@ public class WorkoutServiceImpl implements WorkoutService {
     }
 
     @Override
-    @PreAuthorize("@workoutRepository.existsByIdAndUser_Id(#id, authentication.name)")
+    @PreAuthorize("@workoutRepository.existsByIdAndUser_Id(#id, authentication.principal.id)")
     public void deleteWorkout(Long id) {
         workoutRepository.deleteById(id);
     }
 
     @Override
-    @PreAuthorize("@setSecurity.ownsWorkoutAndExercise(#setRequestDTO, authentication.name)")
+    @PreAuthorize("@setSecurity.ownsWorkoutAndExercise(#setRequestDTO, authentication.principal.id)")
     public SetResponseDTO addSetToWorkout(SetRequestDTO setRequestDTO) {
         Workout workout = workoutRepository.findById(setRequestDTO.workoutId())
                 .orElseThrow(() -> new EntityNotFoundException("Workout not found with id: " + setRequestDTO.workoutId()));
@@ -125,7 +125,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     }
 
     @Override
-    @PreAuthorize("@setSecurity.ownsSet(#setId, authentication.name)")
+    @PreAuthorize("@setSecurity.ownsSet(#setId, authentication.principal.id)")
     public SetResponseDTO updateSet(Long setId, SetRequestDTO setRequestDTO) {
         Set set = setRepository.findById(setId)
                 .orElseThrow(() -> new EntityNotFoundException("Set not found with id: " + setId));
@@ -147,7 +147,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     }
 
     @Override
-    @PreAuthorize("@setSecurity.ownsSet(#setId, authentication.name)")
+    @PreAuthorize("@setSecurity.ownsSet(#setId, authentication.principal.id)")
     public void deleteSet(Long setId) {
         Set set = setRepository.findById(setId)
                 .orElseThrow(() -> new EntityNotFoundException("Set not found with id: " + setId));
@@ -164,7 +164,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     }
 
     @Override
-    @PreAuthorize("@workoutRepository.existsByIdAndUser_Id(#workoutId, authentication.name)")
+    @PreAuthorize("@workoutRepository.existsByIdAndUser_Id(#workoutId, authentication.principal.id)")
     public List<SetResponseDTO> getSetsByWorkoutId(Long workoutId) {
         List<Set> sets = setRepository.findAllByWorkout_Id(workoutId);
         return sets.stream()
@@ -182,7 +182,7 @@ public class WorkoutServiceImpl implements WorkoutService {
     }
 
     @Override
-    @PreAuthorize("@setSecurity.ownsSet(#setId, authentication.name)")
+    @PreAuthorize("@setSecurity.ownsSet(#setId, authentication.principal.id)")
     public SetResponseDTO getSetById(Long setId) {
         Set set = setRepository.findById(setId)
                 .orElseThrow(() -> new EntityNotFoundException("Set not found with id: " + setId));

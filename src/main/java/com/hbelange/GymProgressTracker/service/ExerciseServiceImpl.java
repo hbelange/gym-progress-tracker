@@ -46,13 +46,13 @@ public class ExerciseServiceImpl implements ExerciseService {
     }
     
     @Override
-    @PreAuthorize("@exerciseRepository.existsByIdAndUser_Id(#exerciseId, authentication.name)")
+    @PreAuthorize("@exerciseRepository.existsByIdAndUser_Id(#exerciseId, authentication.principal.id)")
     public void deleteExercise(Long exerciseId) {
         exerciseRepository.deleteById(exerciseId);
     }
 
     @Override
-    @PreAuthorize("@exerciseRepository.existsByIdAndUser_Id(#exerciseId, authentication.name)")
+    @PreAuthorize("@exerciseRepository.existsByIdAndUser_Id(#exerciseId, authentication.principal.id)")
     public ExerciseResponseDTO updateExercise(Long exerciseId, ExerciseRequestDTO exerciseRequestDTO) {
         Exercise exercise = exerciseRepository.findById(exerciseId)
             .orElseThrow(() -> new EntityNotFoundException("Exercise not found with id: " + exerciseId));

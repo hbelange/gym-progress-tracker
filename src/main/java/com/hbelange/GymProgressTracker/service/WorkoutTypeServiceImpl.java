@@ -47,7 +47,7 @@ public class WorkoutTypeServiceImpl implements WorkoutTypeService {
     }
 
     @Override
-    @PreAuthorize("@workoutTypeRepository.existsByIdAndUser_Id(#id, authentication.name)")
+    @PreAuthorize("@workoutTypeRepository.existsByIdAndUser_Id(#id, authentication.principal.id)")
     public WorkoutTypeResponseDTO updateWorkoutType(Long id, WorkoutTypeRequestDTO workoutTypeRequestDTO) {
         WorkoutType workoutType = workoutTypeRepository.findById(id)
             .orElseThrow(() -> new EntityNotFoundException("Workout type not found with id: " + id));
@@ -58,7 +58,7 @@ public class WorkoutTypeServiceImpl implements WorkoutTypeService {
     }
 
     @Override
-    @PreAuthorize("@workoutTypeRepository.existsByIdAndUser_Id(#id, authentication.name)")
+    @PreAuthorize("@workoutTypeRepository.existsByIdAndUser_Id(#id, authentication.principal.id)")
     public void deleteWorkoutType(Long id) {
         workoutTypeRepository.deleteById(id);
     }

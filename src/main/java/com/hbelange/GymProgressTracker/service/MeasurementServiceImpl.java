@@ -48,7 +48,7 @@ public class MeasurementServiceImpl implements MeasurementService {
     }
 
     @Override
-    @PreAuthorize("@measurementRepository.existsByIdAndUser_Id(#measurementId, authentication.name)")
+    @PreAuthorize("@measurementRepository.existsByIdAndUser_Id(#measurementId, authentication.principal.id)")
     public MeasurementResponseDTO updateMeasurement(Long measurementId, MeasurementRequestDTO measurementRequestDTO) {
         Measurement measurement = measurementRepository.findById(measurementId)
             .orElseThrow(() -> new EntityNotFoundException("Measurement not found with id: " + measurementId));
@@ -61,7 +61,7 @@ public class MeasurementServiceImpl implements MeasurementService {
     }
 
     @Override
-    @PreAuthorize("@measurementRepository.existsByIdAndUser_Id(#measurementId, authentication.name)")
+    @PreAuthorize("@measurementRepository.existsByIdAndUser_Id(#measurementId, authentication.principal.id)")
     public void deleteMeasurement(Long measurementId) {
         measurementRepository.deleteById(measurementId);
     }
