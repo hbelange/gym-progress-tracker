@@ -18,5 +18,7 @@ public interface MeasurementRepository extends JpaRepository<Measurement, Long> 
             MeasurementType type, LocalDate startDate, LocalDate endDate);
 
     List<Measurement> findAllByUser_Id(Long userId);
-    
+
+    void deleteAllByUser_Id(Long userId);
+
 }

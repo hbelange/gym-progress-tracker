@@ -15,4 +15,6 @@ public interface WorkoutTypeRepository extends JpaRepository<WorkoutType, Long> 
     Optional<WorkoutType> findByIdAndUser_Id(Long id, Long userId);
 
     List<WorkoutType> findAllByUser_Id(Long userId);
+
+    void deleteAllByUser_Id(Long userId);
 }

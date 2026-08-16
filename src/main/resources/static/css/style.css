@@ -176,6 +176,7 @@ button.save { border-color: var(--gold); color: var(--gold); }
 }
 .message-error { background: var(--danger-tint); color: var(--danger); }
 .message-success { background: var(--gold-tint); color: var(--gold); }
+.message-info { background: var(--grey-tint); color: var(--text-muted); }
 
 /* -- exercise / workout-type lists -- */
 
